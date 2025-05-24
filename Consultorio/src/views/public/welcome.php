@@ -1,14 +1,20 @@
+<?php 
+include_once __DIR__.'/../layouts/header.php';
+//require_once __DIR__.'/../../controllers/ProductsController.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CliniGest</title>
-    <link href="main.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+
 </head>
 <body>
 
-    <?php include 'header.php'; ?>
+
 
     <main class="main">
 
@@ -228,8 +234,7 @@
 
 </main>
 
-
-    <?php include 'footer.php'; ?>
+    <?php include_once __DIR__.'/../layouts/footer.php'; ?>
 
 </body>
 </html>
