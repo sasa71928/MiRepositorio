@@ -1,7 +1,22 @@
 <?php
+// 1) Obtén sólo la ruta (sin query string)
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-$request = $_SERVER['REQUEST_URI'];
-$request = strtok($request, '?');
+// 2) Averigua el prefijo hasta tu carpeta public,
+//    p.ej. "/ProyectoConsultorio/Consultorio/public"
+$basePath = str_replace('\\','/', dirname($_SERVER['SCRIPT_NAME']));
+
+// 3) Le quitas ese prefijo a la URI
+if (strpos($uri, $basePath) === 0) {
+    $request = substr($uri, strlen($basePath));
+} else {
+    $request = $uri;
+}
+
+// 4) Si quedó vacío, lo convertimos en "/" para que case correctamente
+if ($request === '' || $request === false) {
+    $request = '/';
+}
 
 switch($request){
     case '/':
@@ -18,32 +33,6 @@ switch($request){
         break;
     case '/logout':
         require_once __DIR__.'/../src/controllers/LogoutController.php';
-        break;
-    case '/products/add': 
-        require_once __DIR__.'/../src/controllers/ProductsController.php';
-        addProductHandler(); 
-        break;
-    case '/products/edit':
-        require_once __DIR__.'/../src/views/admin/products/edit.php';
-        break;
-    case '/products/update':
-        require_once __DIR__.'/../src/controllers/ProductsController.php';
-        updateProductHandler();
-        break;
-    case '/products/delete':
-        require_once __DIR__.'/../src/controllers/ProductsController.php';
-        deleteProductHandler();
-        break;
-    case '/genres/add':
-        require_once __DIR__.'/../src/controllers/ProductsController.php';
-        addGenreHandler();
-        break;
-    case '/details':
-        include __DIR__.'/../src/views/public/details/details.php';
-        break; 
-    case '/biblioteca':
-        include __DIR__.'/../src/views/public/biblioteca.php';
-        addGenreHandler();
         break;  
     default:
     require_once __DIR__.'/errores.php';
