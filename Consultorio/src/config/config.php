@@ -3,12 +3,12 @@
 //Ejemplo Profe Brenda DB
 
 return [
-    'base_url' => 'http://localhost:81/programacion-web/programacion-web-2024/23_php_bd/public',
-    'assets_url' => 'http://localhost:81/programacion-web/programacion-web-2024/23_php_bd/public/assets',
+    'base_url'   => 'http://localhost/ProyectoConsultorio/public',
+    'assets_url' => 'http://localhost/ProyectoConsultorio/public/assets',
     'db' => [
-        'host' => '127.0.0.1',
-        'name' => 'programacion_web',
-        'user' => 'root',
+        'host'     => '127.0.0.1',
+        'name'     => 'consultorio',
+        'user'     => 'root',
         'password' => ''
     ]
 ];
