@@ -1,51 +1,32 @@
 <?php
-// public/login.php
+// Vista de login, separación de lógica y plantilla
 
-// Carga helpers y configuración
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../src/helpers/auth.php';
+require_once __DIR__ . '/../src/controllers/LoginController.php';
 
+// Define BASE_URL
 $config = include __DIR__ . '/../src/config/config.php';
 if (! defined('BASE_URL')) {
     define('BASE_URL', rtrim($config['base_url'], '/'));
 }
 
-// Si ya está autenticado, redirige al inicio
+// Redirigir si ya autenticado
 if (is_logged_in()) {
     header('Location: ' . BASE_URL . '/');
     exit;
 }
 
-$error = '';
-// Procesar POST de login
+// Inicializar error
+$error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Conectar a la BD
-    $pdo = include __DIR__ . '/../src/config/database.php';
-    // Buscar por correo
-    $stmt = $pdo->prepare('SELECT users.*, roles.name AS role_name
-                           FROM users
-                           JOIN roles ON users.role_id = roles.id
-                           WHERE users.email = ?');
-    $stmt->execute([ $_POST['correo'] ]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($user && password_verify($_POST['contrasena'], $user['password_hash'])) {
-        session_regenerate_id(true);
-        // Guardar datos esenciales en la sesión
-        $_SESSION['user'] = [
-            'id'         => $user['id'],
-            'first_name' => $user['first_name'],
-            'last_name'  => $user['last_name'],
-            'email'      => $user['email'],
-            'role'       => $user['role_name'],
-        ];
-        header('Location: ' . BASE_URL . '/');
-        exit;
-    } else {
-        $error = 'Correo o contraseña inválidos.';
-    }
+    $error = handleLogin($_POST['correo'], $_POST['contrasena']);
 }
+?>
 
-?><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -72,10 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="<?= BASE_URL ?>/registro.php" class="btn btn-create">Crear cuenta</a>
         </div>
         <div class="back-link" style="text-align:center; margin-top:1rem;">
-        <a href="<?= BASE_URL ?>/" class="btn btn-link">Volver</a>
+            <a href="<?= BASE_URL ?>/" class="btn btn-link">Volver</a>
         </div>
     </div>
-
 </body>
 </html>
 
@@ -164,202 +144,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* Formularios */
     form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
     }
 
     input {
-    padding: 12px 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: border-color 0.3s;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
     }
 
     input:focus {
-    outline: none;
-    border-color: #1977cc;
+        outline: none;
+        border-color: #1977cc;
     }
 
     .btn {
-    padding: 12px 15px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
     }
 
     .btn-login {
-    background-color: #1977cc;
-    color: white;
+        background-color: #1977cc;
+        color: white;
     }
 
     .btn-login:hover {
-    background-color: #166ab5;
+        background-color: #166ab5;
     }
 
     .btn-create {
-    background-color: transparent;
-    color: #1977cc;
-    border: 1px solid #1977cc;
-    text-decoration: none;
-    display: block;
+        background-color: transparent;
+        color: #1977cc;
+        border: 1px solid #1977cc;
+        text-decoration: none;
+        display: block;
     }
 
     .btn-create:hover {
-    background-color: rgba(25, 119, 204, 0.1);
+        background-color: rgba(25, 119, 204, 0.1);
     }
 
     /* Enlace de contraseña olvidada */
     .forgot-password {
-    margin-bottom: 20px;
-    text-align: center;
+        margin-bottom: 20px;
+        text-align: center;
     }
 
     .forgot-password a {
-    color: #1977cc;
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.3s;
+        color: #1977cc;
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
     }
 
     .forgot-password a:hover {
-    text-decoration: underline;
-    }
-
-    /* Estilos para recuperación de contraseña */
-    .recovery-step {
-    display: none;
-    }
-
-    .recovery-step.active {
-    display: block;
-    }
-
-    .recovery-info {
-    color: #6c757d;
-    margin-bottom: 20px;
-    font-size: 14px;
-    }
-
-    /* Código de verificación */
-    .verification-code {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    }
-
-    .code-input {
-    width: 40px;
-    height: 50px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
-    }
-
-    /* Requisitos de contraseña */
-    .password-requirements {
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 15px;
-    text-align: left;
-    }
-
-    .password-requirements p {
-    color: #2c4964;
-    font-weight: 600;
-    margin-bottom: 10px;
-    font-size: 14px;
-    }
-
-    .password-requirements ul {
-    list-style-type: none;
-    padding-left: 5px;
-    }
-
-    .password-requirements li {
-    color: #6c757d;
-    font-size: 13px;
-    margin-bottom: 5px;
-    position: relative;
-    padding-left: 20px;
-    }
-
-    .password-requirements li::before {
-    content: "○";
-    position: absolute;
-    left: 0;
-    color: #6c757d;
-    }
-
-    .password-requirements li.valid {
-    color: #19c079;
-    }
-
-    .password-requirements li.valid::before {
-    content: "✓";
-    color: #19c079;
-    }
-
-    /* Confirmación exitosa */
-    .success-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
-
-    .checkmark {
-    color: #19c079;
-    font-size: 40px;
-    line-height: 1;
-    }
-
-    .success-title {
-    color: #2c4964;
-    margin-bottom: 15px;
-    font-size: 22px;
+        text-decoration: underline;
     }
 
     /* Responsivo */
     @media (max-width: 480px) {
-    .login-container {
-        padding: 30px 20px;
-    }
+        .login-container {
+            padding: 30px 20px;
+        }
 
-    h1 {
-        font-size: 24px;
-    }
+        h1 {
+            font-size: 24px;
+        }
 
-    p {
-        font-size: 14px;
-    }
+        p {
+            font-size: 14px;
+        }
 
-    input,
-    .btn {
-        padding: 10px 12px;
-        font-size: 14px;
-    }
-
-    .code-input {
-        width: 35px;
-        height: 45px;
-        font-size: 18px;
-    }
-
-    .forgot-password {
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-    }
+        input,
+        .btn {
+            padding: 10px 12px;
+            font-size: 14px;
+        }
     }
 </style>
