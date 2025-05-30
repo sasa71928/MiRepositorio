@@ -9,7 +9,7 @@ include_once __DIR__.'/../layouts/header.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CliniGest</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="public/assets/css/style.css">
 
 </head>
 <body>
@@ -146,7 +146,7 @@ include_once __DIR__.'/../layouts/header.php';
                     <!-- Lista de departamentos -->
                     <div class="departments-list" data-aos="fade-right" data-aos-delay="100">
                         <ul>
-                            <li class="active"><a href="#pediatria" data-department="pediatria" data-image="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Pediatria.jpg-avJsM4L5GMdbwrJUspD69cLgziWFKs.jpeg">Pediatría</a></li>
+                            <li class="active"><a href="#pediatria" data-department="pediatria" data-image="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Pediatria.jpg-avJsM4L5GMdbwrspD69cLgziWFKs.jpeg">Pediatría</a></li>
                             <li><a href="#enfermeria" data-department="enfermeria" data-image="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Enfermeria.jpg-GK4Bg2pOVGd3dVCRGiIu4acVrAJXIA.jpeg">Enfermería</a></li>
                             <li><a href="#imagenologia" data-department="imagenologia" data-image="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Imagenologia.jpg-XaNEdpFIs43j6N68Kyx7aFx7QkhyKe.jpeg">Imagenología</a></li>
                             <li><a href="#laboratorio" data-department="laboratorio" data-image="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/LaboratorioClinico.jpg-4ZJwUJK07endL3mCvl0ojarvxJqvx3.jpeg">Laboratorio Clínico</a></li>

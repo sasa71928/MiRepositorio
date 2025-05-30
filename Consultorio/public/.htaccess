@@ -1,0 +1,15 @@
+# Activa mod_rewrite
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Ajusta al path real donde está public/
+  RewriteBase /ProyectoConsultorio/Consultorio/public/
+
+  # Si la ruta no es un archivo ni un directorio real...
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # ...entonces reescríbela a index.php
+  RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Además, usa tu propio 404 si algo falla aún antes de PHP
+ErrorDocument 404 /ProyectoConsultorio/Consultorio/public/errores.php

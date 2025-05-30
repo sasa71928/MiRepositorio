@@ -23,18 +23,24 @@ switch($request){
         require_once __DIR__.'/../src/views/public/welcome.php';
         break;
     case '/login':
-        require_once __DIR__.'/login.php';
-        break;
-    case '/products':
-        require_once __DIR__.'/../src/views/admin/products/index.php';
-        break;
-    case '/products/form':
-        require_once __DIR__.'/../src/views/admin/products/form.php';
+        require_once __DIR__.'/../src/controllers/AuthController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            handleLogin();
+        } else {
+            showLogin();
+            require_once __DIR__.'/../src/views/public/login.php';
+        }
         break;
     case '/logout':
-        require_once __DIR__.'/../src/controllers/LogoutController.php';
-        break;  
+        require_once __DIR__.'/../src/controllers/AuthController.php';
+        handleLogout();
+        break;
+    case '/profile':
+        //require_login();
+        //require_once __DIR__.'/../src/views/users/profile.php';
+        break;
     default:
-    require_once __DIR__.'/errores.php';
+        // Aquí llamamos al errores.php que vive en public/
+        require_once __DIR__ . '/errores.php';
         break;
 }
