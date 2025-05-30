@@ -1,38 +1,39 @@
 <?php
+// src/controllers/LoginController.php
+
+require_once __DIR__ . '/../helpers/functions.php';
 require_once __DIR__ . '/../helpers/auth.php';
 
-// Asegura que BASE_URL esté definida
-$config = include __DIR__ . '/../config/config.php';
-if (! defined('BASE_URL')) {
-    define('BASE_URL', rtrim($config['base_url'], '/'));
-}
-
 /**
- * Muestra el formulario de login
+ * Muestra el formulario de login, con un posible mensaje de error.
+ *
+ * @param string|null $error
  */
-function showLogin(): void {
-    include __DIR__ . '/../../public/login.php';
+function showLogin(?string $error = null): void {
+    include __DIR__ . '/../views/public/login.php';
     exit;
 }
 
 /**
- * Procesa el formulario de login y retorna mensaje de error si falla
- *
- * @param string $email
- * @param string $password
- * @return string|null
+ * Procesa el POST del login.
+ * - Si OK, redirige a "/"
+ * - Si falla, vuelve a mostrar el form con $error.
  */
-function handleLogin(string $email, string $password): ?string {
+function handleLogin(): void {
+    $email    = $_POST['correo']    ?? '';
+    $password = $_POST['contrasena'] ?? '';
+    $error    = null;
+
     try {
-        $pdo = include __DIR__ . '/../config/database.php';
+        $pdo  = getPDO();
         $stmt = $pdo->prepare(
-            'SELECT users.*, roles.name AS role_name
-             FROM users
-             JOIN roles ON users.role_id = roles.id
-             WHERE users.email = ?'
+            'SELECT u.*, r.name AS role_name
+             FROM users u
+             JOIN roles r ON u.role_id = r.id
+             WHERE u.email = ?'
         );
         $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password_hash'])) {
             session_regenerate_id(true);
@@ -43,12 +44,13 @@ function handleLogin(string $email, string $password): ?string {
                 'email'      => $user['email'],
                 'role'       => $user['role_name'],
             ];
-            header('Location: ' . BASE_URL . '/');
-            exit;
+            redirect('/');
         }
 
-        return 'Correo o contraseña inválidos.';
+        $error = 'Correo o contraseña inválidos.';
     } catch (PDOException $ex) {
-        return 'Error de conexión: ' . $ex->getMessage();
+        $error = 'Error de conexión: ' . $ex->getMessage();
     }
+
+    showLogin($error);
 }

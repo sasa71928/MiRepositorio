@@ -6,7 +6,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2) Carga helper de auth
+// 2) Incluye tus helpers
+require_once __DIR__ . '/../../helpers/functions.php';
 require_once __DIR__ . '/../../helpers/auth.php';
 
 // 3) Define BASE_URL si no existe
