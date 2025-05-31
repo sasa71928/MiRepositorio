@@ -22,7 +22,7 @@ function logout_user(): void {
     // Destruye la sesión
     session_destroy();
     // Redirige al login (o a '/login', según tu configuración)
-    header('Location: ' . BASE_URL . '/login');
+    header('Location: ' . BASE_URL . '/');
     exit;
 }
 
