@@ -1,29 +1,25 @@
 <?php
 // src/views/layouts/header.php
 
-// 1) Inicia sesión si no está activa
+// 1) Iniciar sesión si no está activa
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2) Incluye tus helpers
-require_once __DIR__ . '/../../helpers/functions.php';
+// 2) Incluir helpers
 require_once __DIR__ . '/../../helpers/auth.php';
 
-// 3) Define BASE_URL si no existe
-if (! defined('BASE_URL')) {
-    $cfg = include __DIR__ . '/../../config/config.php';
-    define('BASE_URL', rtrim($cfg['base_url'], '/'));
-}
+// 3) (Opcional) Definir BASE_URL si aún no existe
+//   Ya lo cubrimos dentro de auth.php, así que no es estrictamente necesario repetirlo aquí.
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CliniGest - Sistema de Gestión Clínica</title>
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CliniGest – Sistema de Gestión Clínica</title>
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
     <header class="header">
@@ -31,11 +27,11 @@ if (! defined('BASE_URL')) {
             <div class="logo">
                 <h1><a href="<?= BASE_URL ?>/">CliniGest</a></h1>
             </div>
-
+            
             <div class="mobile-menu-toggle" id="mobile-menu-toggle">
                 <i class="fas fa-bars"></i>
             </div>
-
+            
             <nav class="nav-menu">
                 <ul>
                     <li class="active"><a href="<?= BASE_URL ?>" class="nav-link">Inicio</a></li>
@@ -43,19 +39,19 @@ if (! defined('BASE_URL')) {
                     <li><a href="<?= BASE_URL ?>/#departamentos" class="nav-link">Departamentos</a></li>
                 </ul>
             </nav>
-
+            
             <div class="header-actions">
-                <?php if (! is_logged_in()): ?>
+                <?php if (!is_logged_in()): ?>
                     <!-- Invitado -->
                     <div class="appointment-btn">
                         <a href="<?= BASE_URL ?>/login" class="btn btn-primary">Iniciar Sesión</a>
                     </div>
                 <?php elseif (is_admin()): ?>
-                    <!-- Administrador -->
+                    <!-- Admin -->
                     <a href="<?= BASE_URL ?>/reports" class="btn btn-primary">Generar Reportes</a>
                     <div class="user-menu">
                         <div class="user-toggle">
-                            <span class="user-name">Administrador Sistema</span>
+                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="user-dropdown">
@@ -68,11 +64,11 @@ if (! defined('BASE_URL')) {
                         </div>
                     </div>
                 <?php elseif (is_doctor()): ?>
-                    <!-- Médico -->
+                    <!-- Doctor -->
                     <a href="<?= BASE_URL ?>/appointments/mine" class="btn btn-primary">Mis Citas</a>
                     <div class="user-menu">
                         <div class="user-toggle">
-                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['first_name'] . ' ' . $_SESSION['user']['last_name']) ?></span>
+                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="user-dropdown">
@@ -86,12 +82,12 @@ if (! defined('BASE_URL')) {
                     </div>
                 <?php else: ?>
                     <!-- Usuario normal -->
-                            <div class="appointment-btn">
-                                <a href="<?= BASE_URL ?>/appointments/create">Agendar Cita</a>
-                            </div>
+                    <div class="appointment-btn">
+                        <a href="<?= BASE_URL ?>/appointments/create">Agendar Cita</a>
+                    </div>
                     <div class="user-menu">
                         <div class="user-toggle">
-                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['first_name'] . ' ' . $_SESSION['user']['last_name']) ?></span>
+                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="user-dropdown">

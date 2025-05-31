@@ -1,38 +1,56 @@
+<?php
+// src/views/public/login.php
+
+// Ya comienza con session_start() y verifica is_logged_in() si quieres
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . '/../../../src/helpers/auth.php';
+
+if (is_logged_in()) {
+    header('Location: ' . BASE_URL . '/');
+    exit;
+}
+
+// Aquí asumo que $error proviene del router (ó de handleLogin)
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CliniGest - Iniciar Sesión</title>
-  <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CliniGest - Iniciar Sesión</title>
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css" />
 </head>
 <body>
-  <div class="login-container">
-    <h1>CliniGest</h1>
-    <p>Ingrese sus datos para iniciar sesión</p>
+    <div class="login-container">
+        <h1>CliniGest</h1>
+        <p>Ingrese sus datos para iniciar sesión</p>
 
-    <?php if (!empty($error)): ?>
-      <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
 
-    <form action="<?= BASE_URL ?>/login" method="POST">
-      <input type="email" name="correo" placeholder="Correo" required>
-      <input type="password" name="contrasena" placeholder="Contraseña" required>
-      <button type="submit" class="btn btn-login">Iniciar sesión</button>
-    </form>
+        <form action="<?= BASE_URL ?>/login" method="POST">
+            <input type="email" name="correo" placeholder="Correo" required />
+            <input type="password" name="contrasena" placeholder="Contraseña" required />
+            <button type="submit" class="btn btn-login">Iniciar sesión</button>
+        </form>
 
-    <div class="forgot-password">
-      <a href="<?= BASE_URL ?>/recuperarContraseña">¿Olvidó su contraseña?</a>
+        <div class="forgot-password">
+            <a href="<?= BASE_URL ?>/recuperarContraseña.php">¿Olvidó su contraseña?</a>
+        </div>
+        <div class="create-account">
+            <a href="<?= BASE_URL ?>/registro" class="btn btn-create">Crear cuenta</a>
+        </div>
+        <div class="back-link" style="text-align:center; margin-top:1rem;">
+            <a href="<?= BASE_URL ?>/" class="btn btn-link">Volver</a>
+        </div>
     </div>
-    <div class="create-account">
-      <a href="<?= BASE_URL ?>/registro" class="btn btn-create">Crear cuenta</a>
-    </div>
-    <div class="back-link" style="text-align:center; margin-top:1rem;">
-      <a href="<?= BASE_URL ?>/" class="btn btn-link">Volver</a>
-    </div>
-  </div>
 </body>
 </html>
+
 
 
 
