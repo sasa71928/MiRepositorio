@@ -27,107 +27,112 @@ include_once __DIR__ . '/../layouts/header.php';
                     <div class="profile-sidebar">
                         <div class="profile-menu">
                             <ul>
-                                <li class="active"><a href="#personal-info">Información Personal</a></li>
-                                <li><a href="#medical-info">Información Médica</a></li>
-                                <li><a href="#security">Seguridad</a></li>
-                                <li><a href="#preferences">Preferencias</a></li>
+                            <?php if ($user['role'] === 'user'): ?>
+                              <li class="active"><a href="#personal-info">Información Personal</a></li>
+                              <li><a href="#medical-info">Información Médica</a></li>
+                              <li><a href="#security">Seguridad</a></li>
+                              <li><a href="#preferences">Preferencias</a></li>
+                            <?php elseif ($user['role'] === 'doctor'): ?>
+                              <li class="active"><a href="#personal-info">Información Personal</a></li>
+                              <li><a href="#security">Seguridad</a></li>
+                            <?php elseif ($user['role'] === 'admin'): ?>
+                              <li class="active"><a href="#personal-info">Información Administrador</a></li>
+                            <?php endif; ?>
                             </ul>
                         </div>
                     </div>
                     
                     <div class="profile-content">
-                        <!-- ====================== Pestaña: Información Personal ====================== -->
+                        <?php if (in_array($user['role'], ['user', 'doctor', 'admin'])): ?>
                         <div id="personal-info" class="profile-tab active">
                             <h3>Información Personal</h3>
+                            <!-- Administrador -->
+                            <?php if ($user['role'] === 'admin'): ?>
                             <form class="profile-form" action="<?= BASE_URL ?>/profile/update_personal" method="POST">
-                                <!-- Si deseas editar y guardar, apunta a una ruta tipo /profile/update_personal -->
                                 <div class="form-row">
                                     <div class="form-group">
+                                        <label for="role">Rol</label>
+                                        <input type="text" id="role" name="role" class="form-control" value="<?= htmlspecialchars(ucfirst($user['role'])) ?>" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="username">Nombre de Usuario</label>
+                                        <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" required>
+                                    </div>
+                                    <div class="form-group">
                                         <label for="first_name">Nombre</label>
-                                        <input type="text"
-                                               id="first_name"
-                                               name="first_name"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['first_name']) ?>"
-                                               required>
+                                        <input type="text" id="first_name" name="first_name" class="form-control" value="<?= htmlspecialchars($user['first_name']) ?>" disabled>
                                     </div>
                                     <div class="form-group">
                                         <label for="last_name">Apellido</label>
-                                        <input type="text"
-                                               id="last_name"
-                                               name="last_name"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['last_name']) ?>"
-                                               required>
+                                        <input type="text" id="last_name" name="last_name" class="form-control" value="<?= htmlspecialchars($user['last_name']) ?>" disabled>
                                     </div>
                                 </div>
-
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="email">Correo Electrónico</label>
-                                        <input type="email"
-                                               id="email"
-                                               name="email"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['email']) ?>"
-                                               required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="phone">Teléfono</label>
-                                        <input type="tel"
-                                               id="phone"
-                                               name="phone"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['phone']) ?>">
+                                        <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" disabled>
                                     </div>
                                 </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="birthdate">Fecha de Nacimiento</label>
-                                        <input type="date"
-                                               id="birthdate"
-                                               name="birthdate"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['birthdate']) ?>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="address">Dirección</label>
-                                        <input type="text"
-                                               id="address"
-                                               name="address"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['address']) ?>">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="city">Ciudad</label>
-                                        <input type="text"
-                                               id="city"
-                                               name="city"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars($user['city']) ?>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="role">Rol</label>
-                                        <input type="text"
-                                               id="role"
-                                               name="role"
-                                               class="form-control"
-                                               value="<?= htmlspecialchars(ucfirst($user['role'])) ?>"
-                                               disabled>
-                                    </div>
-                                </div>
-                                
                                 <div class="form-actions">
                                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                                 </div>
                             </form>
+                            <?php else: ?>
+                            <!-- Usuario Datos -->
+                            <form class="profile-form" action="<?= BASE_URL ?>/profile/update_personal" method="POST">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="username">Nombre de Usuario</label>
+                                        <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="first_name">Nombre</label>
+                                        <input type="text" id="first_name" name="first_name" class="form-control" value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="last_name">Apellido</label>
+                                        <input type="text" id="last_name" name="last_name" class="form-control" value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="email">Correo Electrónico</label>
+                                        <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="phone">Teléfono</label>
+                                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone']) ?>">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="birthdate">Fecha de Nacimiento</label>
+                                        <input type="date" id="birthdate" name="birthdate" class="form-control" value="<?= htmlspecialchars($user['birthdate']) ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="address">Dirección</label>
+                                        <input type="text" id="address" name="address" class="form-control" value="<?= htmlspecialchars($user['address']) ?>">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="city">Ciudad</label>
+                                        <input type="text" id="city" name="city" class="form-control" value="<?= htmlspecialchars($user['city']) ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="role">Rol</label>
+                                        <input type="text" id="role" name="role" class="form-control" value="<?= htmlspecialchars(ucfirst($user['role'])) ?>" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </form>
+                            <?php endif; ?>
                         </div>
-                        
-                        <!-- ====================== Pestaña: Información Médica ====================== -->
+                        <?php endif; ?>
+                            <!-- Usuario Historial Medico -->
+                        <?php if ($user['role'] === 'user'): ?>
                         <div id="medical-info" class="profile-tab">
                             <h3>Información Médica</h3>
                             <form class="profile-form" action="<?= BASE_URL ?>/profile/update_medical" method="POST">
@@ -176,8 +181,9 @@ include_once __DIR__ . '/../layouts/header.php';
                                 </div>
                             </form>
                         </div>
-                        
-                        <!-- ====================== Pestaña: Seguridad ====================== -->
+                        <?php endif; ?>
+                                <!-- Usuario Contraseña -->
+                        <?php if (in_array($user['role'], ['user', 'doctor'])): ?>
                         <div id="security" class="profile-tab">
                             <h3>Seguridad</h3>
                             <form class="profile-form" action="<?= BASE_URL ?>/profile/change_password" method="POST">
@@ -213,8 +219,9 @@ include_once __DIR__ . '/../layouts/header.php';
                                 </div>
                             </form>
                         </div>
-                        
-                        <!-- ====================== Pestaña: Preferencias ====================== -->
+                        <?php endif; ?>
+                                <!-- Usuario Preferencias -->
+                        <?php if ($user['role'] === 'user'): ?>
                         <div id="preferences" class="profile-tab">
                             <h3>Preferencias</h3>
                             <form class="profile-form" action="<?= BASE_URL ?>/profile/update_preferences" method="POST">
@@ -280,9 +287,10 @@ include_once __DIR__ . '/../layouts/header.php';
                                 </div>
                             </form>
                         </div>
-                    </div> <!-- .profile-content -->
-                </div>     <!-- .profile-container -->
-            </div>         <!-- .container -->
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -294,14 +302,8 @@ include_once __DIR__ . '/../layouts/header.php';
             tabLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
-                    document.querySelectorAll('.profile-menu li').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    tabContents.forEach(tab => {
-                        tab.classList.remove('active');
-                    });
-                    
+                    document.querySelectorAll('.profile-menu li').forEach(item => item.classList.remove('active'));
+                    tabContents.forEach(tab => tab.classList.remove('active'));
                     this.parentElement.classList.add('active');
                     const targetTab = document.querySelector(this.getAttribute('href'));
                     targetTab.classList.add('active');
@@ -311,6 +313,7 @@ include_once __DIR__ . '/../layouts/header.php';
     </script>
 </body>
 </html>
+
 
 <style>
     /* Estilos para la página de perfil */
