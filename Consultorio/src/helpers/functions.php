@@ -1,13 +1,40 @@
 <?php
-// src/helpers/functions.php
+/**
+ * src/helpers/functions.php
+ * 
+ * Aquí definimos todas las constantes globales (BASE_URL, ASSETS_URL, etc.)
+ * y cualquier otra función “de apoyo” que usemos en todo el proyecto.
+ */
 
+// 1) Cargamos la configuración general
 $config = include __DIR__ . '/../config/config.php';
-if (!is_array($config)) {
-    throw new RuntimeException('No se pudo cargar la configuración');
+
+// 2) Definimos BASE_URL si no existía
+if (! defined('BASE_URL')) {
+    define('BASE_URL', rtrim($config['base_url'], '/'));
 }
 
-define('BASE_URL',   rtrim($config['base_url'],   '/'));
-define('ASSETS_URL', rtrim($config['assets_url'], '/'));
+// 3) Definimos ASSETS_URL si no existía
+if (! defined('ASSETS_URL')) {
+    // asumimos que en config.php hay algo como 'assets_url' => 'http://localhost/ProyectoConsultorio/...'
+    define('ASSETS_URL', rtrim($config['assets_url'], '/'));
+}
+
+/**
+ * Aquí podrías agregar otras funciones de utilidad, por ejemplo:
+ */
+
+if (! function_exists('dd')) {
+    /**
+     * Ejemplo de “dump and die” para depuración.
+     */
+    function dd($var) {
+        echo '<pre>'; var_dump($var); echo '</pre>';
+        exit;
+    }
+}
+
+// Si tienes más funciones auxiliares, colócalas aquí...
 
 function getPDO(): PDO {
     static $pdo;

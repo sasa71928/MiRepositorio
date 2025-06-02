@@ -1,172 +1,340 @@
 <?php
 // src/views/public/registro.php
+
+// 1) Iniciar sesión y cargar constantes
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../../helpers/auth.php';
+require_once __DIR__ . '/../../helpers/functions.php';
+
+// Definir BASE_URL y ASSETS_URL
+$config = include __DIR__ . '/../../config/config.php';
+if (! defined('BASE_URL')) {
+    define('BASE_URL', rtrim($config['base_url'], '/'));
+}
+if (! defined('ASSETS_URL')) {
+    define('ASSETS_URL', rtrim($config['assets_url'], '/'));
+}
+
+// 2) Si ya está autenticado, redirigir a "/"
+if (is_logged_in()) {
+    header('Location: ' . BASE_URL . '/');
+    exit;
+}
+
+// 3) Leer valores previos y errores de sesión (si existen)
+$data   = $_SESSION['registro_data']   ?? [];
+$errors = $_SESSION['registro_errors'] ?? [];
+// Limpio para no repetir
+unset($_SESSION['registro_errors'], $_SESSION['registro_data']);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CliniGest – Crear Cuenta</title>
-    <!-- Apunta al CSS desde ASSETS_URL -->
-    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/registro.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CliniGest – Registro Paciente</title>
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/registro.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
-    <div class="registro-container">
-        <h1>CliniGest</h1>
-        <p>Crea una cuenta</p>
 
-        <!-- Si el controlador envió errores, muéstralos -->
-        <?php if (!empty($errors)): ?>
-            <ul class="errors-list">
-                <?php foreach ($errors as $err): ?>
-                    <li><?= htmlspecialchars($err) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
+  <main class="container registro-container">
+    <h2>Crear Cuenta (Paciente)</h2>
 
-        <form action="<?= BASE_URL ?>/registro" method="POST">
-            <!-- Correo electrónico -->
-            <input type="email" name="correo" placeholder="Correo electrónico" required
-                   value="<?= htmlspecialchars($_POST['correo'] ?? '') ?>">
+    <!-- Mostrar lista de errores, si hay -->
+    <?php if (! empty($errors)): ?>
+      <ul class="errors-list">
+      <?php foreach ($errors as $msg): ?>
+        <li><?= htmlspecialchars($msg) ?></li>
+      <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
 
-            <!-- Nombre(s) -->
-            <input type="text" name="first_name" placeholder="Nombre(s)" required
-                   value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>">
+<form action="<?= BASE_URL ?>/registro" method="POST" id="registroForm">
+  <!-- Paso 1: Datos Personales -->
+  <div class="step active" data-step="1">
+    <fieldset>
+      <legend>Datos Personales</legend>
 
-            <!-- Apellido(s) -->
-            <input type="text" name="last_name" placeholder="Apellido(s)" required
-                   value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>">
+      <label>Usuario (username):
+        <input type="text" name="username"
+               value="<?= htmlspecialchars($data['username'] ?? '') ?>"
+               required>
+      </label>
 
-            <!-- Nombre de usuario -->
-            <input type="text" name="username" placeholder="Nombre de usuario" required
-                   value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+      <label>Nombre:
+        <input type="text" name="first_name"
+               value="<?= htmlspecialchars($data['first_name'] ?? '') ?>"
+               required>
+      </label>
 
-            <!-- Teléfono -->
-            <input type="tel" name="phone" placeholder="Número de teléfono" required
-                   value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>">
+      <label>Apellido:
+        <input type="text" name="last_name"
+               value="<?= htmlspecialchars($data['last_name'] ?? '') ?>"
+               required>
+      </label>
 
-            <!-- Contraseña -->
-            <input type="password" name="contrasena" placeholder="Contraseña" required>
+      <label>Correo:
+        <input type="email" name="email"
+               value="<?= htmlspecialchars($data['email'] ?? '') ?>"
+               required>
+      </label>
 
-            <!-- Confirmar contraseña -->
-            <input type="password" name="confirmar" placeholder="Confirmar contraseña" required>
+      <label>Teléfono:
+        <input type="text" name="phone"
+               value="<?= htmlspecialchars($data['phone'] ?? '') ?>"
+               required>
+      </label>
 
-            <!-- Botón de registro -->
-            <button type="submit" class="btn btn-registrar">Registrarte</button>
-        </form>
+      <label>Fecha de nacimiento:
+        <input type="date" name="birthdate"
+               value="<?= htmlspecialchars($data['birthdate'] ?? '') ?>"
+               required>
+      </label>
 
-        <a href="<?= BASE_URL ?>/login" class="enlace-login">¿Ya tienes una cuenta?</a>
+      <label>Dirección:
+        <input type="text" name="address"
+               value="<?= htmlspecialchars($data['address'] ?? '') ?>">
+      </label>
+
+      <label>Ciudad:
+        <input type="text" name="city"
+               value="<?= htmlspecialchars($data['city'] ?? '') ?>">
+      </label>
+    </fieldset>
+
+    <div class="step-buttons">
+      <button type="button" class="next-btn" onclick="nextStep()">Siguiente</button>
     </div>
+  </div>
+
+    <!-- Paso 2: Contrasena -->
+  <div class="step" data-step="2">
+    <fieldset>
+      <label>Contraseña:
+        <input type="password" name="password" required>
+      </label>
+
+      <label>Confirmar Contraseña:
+        <input type="password" name="confirm_password" required>
+      </label>
+    </fieldset>
+
+    <div class="step-buttons">
+      <button type="button" class="prev-btn" onclick="prevStep()">Anterior</button>
+      <button type="button" class="next-btn" onclick="nextStep()">Siguiente</button>
+    </div>
+
+  </div>
+
+  <!-- Paso 3: Información Médica -->
+  <div class="step" data-step="3">
+    <fieldset>
+        
+      <legend>Información Médica</legend>
+      <label>Género:
+        <select name="gender" required>
+          <option value="">Selecciona...</option>
+          <option value="M" <?= (isset($data['gender']) && $data['gender'] === 'M') ? 'selected' : '' ?>>Masculino</option>
+          <option value="F" <?= (isset($data['gender']) && $data['gender'] === 'F') ? 'selected' : '' ?>>Femenino</option>
+        </select>
+      </label>
+      <label>Tipo de sangre:
+        <select name="blood_type">
+          <option value="">Selecciona...</option>
+          <?php
+          $tipos = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+          foreach ($tipos as $tipo) {
+              $sel = ($data['blood_type'] ?? '') === $tipo ? 'selected' : '';
+              echo "<option value=\"$tipo\" $sel>$tipo</option>";
+          }
+          ?>
+        </select>
+      </label>
+
+      <label>Alergias:
+        <textarea name="allergies"><?= htmlspecialchars($data['allergies'] ?? '') ?></textarea>
+      </label>
+
+      <label>Enfermedades crónicas:
+        <textarea name="chronic_diseases"><?= htmlspecialchars($data['chronic_diseases'] ?? '') ?></textarea>
+      </label>
+
+      <label>Medicamentos actuales:
+        <textarea name="current_medications"><?= htmlspecialchars($data['current_medications'] ?? '') ?></textarea>
+      </label>
+    </fieldset>
+
+    <div class="step-buttons">
+      <button type="button" class="prev-btn" onclick="prevStep()">Anterior</button>
+      <button type="button" class="next-btn" onclick="nextStep()">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- Paso 4: Preferencias de Notificación -->
+  <div class="step" data-step="4">
+    <fieldset>
+      <legend>Preferencias</legend>
+
+      <label><input type="checkbox" name="notify_email" <?= !empty($data['notify_email']) ? 'checked' : '' ?>> Recibir recordatorios por email</label>
+      <label><input type="checkbox" name="notify_sms" <?= !empty($data['notify_sms']) ? 'checked' : '' ?>> Recibir recordatorios por SMS</label>
+      <label><input type="checkbox" name="notify_whatsapp" <?= !empty($data['notify_whatsapp']) ? 'checked' : '' ?>> Recibir recordatorios por WhatsApp</label>
+
+      <label>Días antes para enviar recordatorio:
+        <select name="reminder_days">
+          <option value="1" <?= ($data['reminder_days'] ?? '') === '1' ? 'selected' : '' ?>>1 día</option>
+          <option value="2" <?= ($data['reminder_days'] ?? '') === '2' ? 'selected' : '' ?>>2 días</option>
+          <option value="7" <?= ($data['reminder_days'] ?? '') === '7' ? 'selected' : '' ?>>7 días</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <div class="step-buttons">
+      <button type="button" class="prev-btn" onclick="prevStep()">Anterior</button>
+      <button type="submit" class="next-btn">Registrar</button>
+    </div>
+  </div>
+</form>
+
+
+
+    <p class="mt-3">
+      ¿Ya tienes cuenta? <a href="<?= BASE_URL ?>/login">Iniciar Sesión</a>
+    </p>
+  </main>
+
+<script>
+  const steps = document.querySelectorAll('.step');
+  let currentStep = 0;
+
+  function showStep(index) {
+    steps.forEach((el, i) => el.classList.toggle('active', i === index));
+    currentStep = index;
+  }
+
+  function nextStep() {
+    if (currentStep < steps.length - 1) {
+      showStep(currentStep + 1);
+      document.querySelector('.registro-container').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      showStep(currentStep - 1);
+      document.querySelector('.registro-container').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // 🔒 Bloquea el envío si no estás en el último paso
+  document.addEventListener('DOMContentLoaded', () => {
+    showStep(0);
+    document.getElementById('registroForm').addEventListener('submit', function (e) {
+      if (currentStep < steps.length - 1) {
+        e.preventDefault();
+        nextStep();
+      }
+    });
+  });
+</script>
+
+
 </body>
 </html>
 
-<style>
-    /* Tus estilos específicos para registro */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  <style>
+    /* Estilos para los pasos y botones */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .step-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+    .step-buttons button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .step-buttons .next-btn {
+      background-color: #1977cc;
+      color: #fff;
+    }
+    .step-buttons .next-btn:hover {
+      background-color: #166ab5;
+    }
+    .step-buttons .prev-btn {
+      background-color: #6c757d;
+      color: #fff;
+    }
+    .step-buttons .prev-btn:hover {
+      background-color: #5a6268;
     }
 
+    /* Estilos específicos del formulario de registro */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
     body {
-        background-color: #bdd7e5;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        padding: 20px;
+      background-color: #bdd7e5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
     }
-
     .registro-container {
-        background-color: white;
-        padding: 60px 30px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        width: 100%;
-        max-width: 500px;
-        min-height: 600px;
-        text-align: center;
-        transition: all 0.3s ease;
+      background-color: white;
+      padding: 40px 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
     }
-
-    .registro-container h1 {
-        font-size: 48px;
-        margin-bottom: 10px;
-        font-weight: 700;
+    .registro-container h2 {
+      margin-bottom: 20px;
+      color: #2c4964;
     }
-
-    .registro-container p {
-        margin-bottom: 30px;
-        color: #333;
+    .registro-container input,
+    .registro-container select,
+    .registro-container textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
     }
-
-    .registro-container input {
-        width: 100%;
-        padding: 12px;
-        margin: 8px 0;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 16px;
+    .registro-container label {
+      display: block;
+      text-align: left;
+      margin-top: 10px;
+      color: #2c4964;
+      font-weight: 500;
     }
-
-    .btn {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        margin-top: 12px;
-        border: none;
-        border-radius: 4px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background-color 0.3s;
+    .next-btn, .prev-btn {
+      min-width: 120px;
     }
-
-    .btn-registrar {
-        background-color: #1f3970;
-        color: white;
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #842029;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      text-align: center;
     }
-
-    .btn-registrar:hover {
-        background-color: #162b56;
+    .mt-3 {
+      margin-top: 1rem;
     }
-
-    .enlace-login {
-        display: block;
-        margin-top: 20px;
-        color: #1f5c85;
-        text-decoration: none;
-        font-size: 14px;
-    }
-
-    .enlace-login:hover {
-        text-decoration: underline;
-    }
-
-    .errors-list {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-        color: #c0392b;
-    }
-
-    .errors-list li {
-        margin: 4px 0;
-    }
-
-    @media (max-width: 480px) {
-        .registro-container {
-            padding: 40px 20px;
-            min-height: auto;
-        }
-        .registro-container h1 {
-            font-size: 36px;
-        }
-        .btn {
-            font-size: 16px;
-            padding: 10px;
-        }
-    }
-</style>
+  </style>

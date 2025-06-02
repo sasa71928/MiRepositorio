@@ -18,10 +18,10 @@ require_once __DIR__ . '/../../helpers/auth.php';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CliniGest – Sistema de Gestión Clínica</title>
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css" />
+    <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
-<body>
+
     <header class="header">
         <div class="container header-container">
             <div class="logo">
