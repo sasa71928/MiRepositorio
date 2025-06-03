@@ -197,7 +197,7 @@ include_once __DIR__ . '/../layouts/header.php';
                         <?php if (in_array($user['role'], ['user', 'doctor'])): ?>
                         <div id="security" class="profile-tab">
                             <h3>Seguridad</h3>
-                            <form class="profile-form" action="<?= BASE_URL ?>/profile/change_password" method="POST">
+                            <form class="profile-form" action="<?= BASE_URL ?>/change_password" method="POST">
                                 <div class="form-group">
                                     <label for="current_password">Contraseña Actual</label>
                                     <input type="password"

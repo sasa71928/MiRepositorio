@@ -252,3 +252,51 @@ function update_medical(): void {
     exit;
 }
 
+function change_password(): void {
+    session_start();
+    require_once __DIR__ . '/../config/database.php';
+
+    $userId = $_SESSION['user']['id'] ?? null;
+    if (!$userId) {
+        header('Location: ' . BASE_URL . '/login');
+        exit;
+    }
+
+    $current = $_POST['current_password'] ?? '';
+    $new     = $_POST['new_password']     ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+    $errors  = [];
+
+    // Validaciones
+    if (strlen($new) < 6) {
+        $errors[] = "La nueva contraseña debe tener al menos 6 caracteres.";
+    }
+    if ($new !== $confirm) {
+        $errors[] = "La nueva contraseña y su confirmación no coinciden.";
+    }
+
+    // Verificar contraseña actual
+    $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row || !password_verify($current, $row['password_hash'])) {
+        $errors[] = "La contraseña actual no es correcta.";
+    }
+
+    if (!empty($errors)) {
+        $_SESSION['profile_errors'] = $errors;
+        header('Location: ' . BASE_URL . '/profile#security');
+        exit;
+    }
+
+    // Actualizar nueva contraseña
+    $newHash = password_hash($new, PASSWORD_DEFAULT);
+    $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+    $stmt->execute([$newHash, $userId]);
+
+    $_SESSION['profile_success'] = "Contraseña actualizada correctamente.";
+    header('Location: ' . BASE_URL . '/profile#security');
+    exit;
+}
+

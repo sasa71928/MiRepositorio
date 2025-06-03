@@ -82,7 +82,12 @@ switch ($request) {
         require_once __DIR__ . '/../src/controllers/ProfileController.php';
         update_medical();
         break;
-
+    case '/change_password':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../src/controllers/ProfileController.php';
+            change_password();
+        }
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
