@@ -49,7 +49,7 @@ require_once __DIR__ . '/../../helpers/auth.php';
                 <?php elseif (is_admin()): ?>
                     <!-- Admin -->
                     <div class="appointment-btn">
-                        <a href="<?= BASE_URL ?>/reports">Agendar Cita</a>
+                        <a href="<?= BASE_URL ?>/reports">Generar Reporte</a>
                     </div>
                     <div class="user-menu">
                         <div class="user-toggle">
