@@ -146,7 +146,7 @@ include_once __DIR__ . '/../layouts/header.php';
                         <?php if ($user['role'] === 'user'): ?>
                         <div id="medical-info" class="profile-tab">
                             <h3>Información Médica</h3>
-                            <form class="profile-form" action="<?= BASE_URL ?>/profile/update_medical" method="POST">
+                            <form class="profile-form" action="<?= BASE_URL ?>/update_medical" method="POST">
                                 <div class="form-group">
                                     <label for="blood_type">Tipo de Sangre</label>
                                     <select id="blood_type"

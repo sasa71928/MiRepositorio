@@ -209,3 +209,46 @@ function update_personal(): void {
     header('Location: ' . BASE_URL . '/login');
     exit;
 }
+
+function update_medical(): void {
+    session_start();
+    require_once __DIR__ . '/../config/database.php';
+
+    $userId = $_SESSION['user']['id'] ?? null;
+    if (!$userId) {
+        header('Location: ' . BASE_URL . '/login');
+        exit;
+    }
+
+    $bloodType = trim($_POST['blood_type'] ?? '');
+    $allergies = trim($_POST['allergies'] ?? '');
+    $chronic  = trim($_POST['chronic_diseases'] ?? '');
+    $meds     = trim($_POST['current_medications'] ?? '');
+
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE medical_info SET
+                blood_type = ?,
+                allergies = ?,
+                chronic_diseases = ?,
+                current_medications = ?,
+                updated_at = NOW()
+            WHERE user_id = ?
+        ");
+        $stmt->execute([
+            $bloodType !== '' ? $bloodType : null,
+            $allergies !== '' ? $allergies : null,
+            $chronic   !== '' ? $chronic : null,
+            $meds      !== '' ? $meds : null,
+            $userId
+        ]);
+
+        $_SESSION['profile_success'] = "Información médica actualizada correctamente.";
+    } catch (PDOException $e) {
+        $_SESSION['profile_errors'] = ["Error al actualizar: " . $e->getMessage()];
+    }
+
+    header('Location: ' . BASE_URL . '/profile');
+    exit;
+}
+
