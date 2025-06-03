@@ -73,7 +73,11 @@ switch ($request) {
         require_once __DIR__ . '/../src/controllers/ProfileController.php';
         showProfile();
         break;
-
+    case '/update_personal':
+        require_once __DIR__ . '/../src/helpers/auth.php';
+        require_once __DIR__ . '/../src/controllers/ProfileController.php';
+        update_personal();
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

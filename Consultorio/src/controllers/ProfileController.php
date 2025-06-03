@@ -121,3 +121,91 @@ function showProfile(): void {
         exit;
     }
 }
+
+function update_personal(): void {
+    session_start();
+    require_once __DIR__ . '/../config/database.php';
+
+    $userId = $_SESSION['user']['id'] ?? null;
+    if (!$userId) {
+        header('Location: ' . BASE_URL . '/login');
+        exit;
+    }
+
+    $input = $_POST;
+    $errors = [];
+
+    // Normalizar entradas
+    $username   = trim($input['username']   ?? '');
+    $firstName  = trim($input['first_name'] ?? '');
+    $lastName   = trim($input['last_name']  ?? '');
+    $email      = trim($input['email']      ?? '');
+    $phone      = trim($input['phone']      ?? '');
+    $birthdate  = trim($input['birthdate']  ?? '');
+    $address    = trim($input['address']    ?? '');
+    $city       = trim($input['city']       ?? '');
+
+    // Validaciones
+    if ($username === '')     $errors[] = 'El nombre de usuario es obligatorio.';
+    if ($firstName === '')    $errors[] = 'El nombre es obligatorio.';
+    if ($lastName === '')     $errors[] = 'El apellido es obligatorio.';
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'El correo electrónico no es válido.';
+    }
+    if ($birthdate && !strtotime($birthdate)) {
+        $errors[] = 'La fecha de nacimiento no es válida.';
+    }
+
+    // Validar duplicados de username o email
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE (username = ? OR email = ?) AND id != ?");
+    $stmt->execute([$username, $email, $userId]);
+    if ($stmt->fetchColumn() > 0) {
+        $errors[] = "El nombre de usuario o correo ya están registrados.";
+    }
+
+    if (!empty($errors)) {
+        $_SESSION['profile_errors'] = $errors;
+        header('Location: ' . BASE_URL . '/profile');
+        exit;
+    }
+
+    // Actualizar usuario
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE users SET
+                username = ?,
+                first_name = ?,
+                last_name = ?,
+                email = ?,
+                phone = ?,
+                birthdate = ?,
+                address = ?,
+                city = ?,
+                updated_at = NOW()
+            WHERE id = ?
+        ");
+        $stmt->execute([
+            $username,
+            $firstName,
+            $lastName,
+            $email,
+            $phone !== '' ? $phone : null,
+            $birthdate !== '' ? $birthdate : null,
+            $address !== '' ? $address : null,
+            $city !== '' ? $city : null,
+            $userId
+        ]);
+
+        $_SESSION['profile_success'] = 'Información actualizada correctamente.';
+    } catch (PDOException $e) {
+        $_SESSION['profile_errors'] = ['Error al actualizar: ' . $e->getMessage()];
+    }
+            // Refrescar datos del usuario en la sesión
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $_SESSION['user'] = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+    header('Location: ' . BASE_URL . '/login');
+    exit;
+}
