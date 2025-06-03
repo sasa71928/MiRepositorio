@@ -74,24 +74,41 @@ switch ($request) {
         showProfile();
         break;
     case '/update_personal':
-        require_once __DIR__ . '/../src/helpers/auth.php';
-        require_once __DIR__ . '/../src/controllers/ProfileController.php';
-        update_personal();
-        break;
-    case '/update_medical':
-        require_once __DIR__ . '/../src/controllers/ProfileController.php';
-        update_medical();
-        break;
-    case '/change_password':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../src/controllers/ProfileController.php';
-            change_password();
+            update_personal();
+        } else {
+            header('Location: ' . BASE_URL . '/profile');
+            exit;
         }
         break;
-    case '/update_preferences':
+case '/update_medical':
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../src/controllers/ProfileController.php';
+        update_medical();
+    } else {
+        header('Location: ' . BASE_URL . '/profile');
+        exit;
+    }
+    break;
+
+case '/change_password':
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../src/controllers/ProfileController.php';
+        change_password();
+    } else {
+        header('Location: ' . BASE_URL . '/profile');
+        exit;
+    }
+    break;
+
+case '/update_preferences':
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/../src/controllers/ProfileController.php';
         update_preferences();
+    } else {
+        header('Location: ' . BASE_URL . '/profile');
+        exit;
     }
     break;
 
