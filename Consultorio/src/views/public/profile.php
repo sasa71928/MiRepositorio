@@ -235,7 +235,7 @@ include_once __DIR__ . '/../layouts/header.php';
                         <?php if ($user['role'] === 'user'): ?>
                         <div id="preferences" class="profile-tab">
                             <h3>Preferencias</h3>
-                            <form class="profile-form" action="<?= BASE_URL ?>/profile/update_preferences" method="POST">
+                            <form class="profile-form" action="<?= BASE_URL ?>/update_preferences" method="POST">
                                 <div class="form-group">
                                     <label>Notificaciones</label>
                                     <div class="checkbox-group">

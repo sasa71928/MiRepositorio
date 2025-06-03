@@ -88,6 +88,13 @@ switch ($request) {
             change_password();
         }
         break;
+    case '/update_preferences':
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        require_once __DIR__ . '/../src/controllers/ProfileController.php';
+        update_preferences();
+    }
+    break;
+
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

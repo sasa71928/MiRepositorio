@@ -300,3 +300,55 @@ function change_password(): void {
     exit;
 }
 
+function update_preferences(): void {
+    session_start();
+    require_once __DIR__ . '/../config/database.php';
+
+    $userId = $_SESSION['user']['id'] ?? null;
+    if (!$userId) {
+        header('Location: ' . BASE_URL . '/login');
+        exit;
+    }
+
+    $notify_email    = isset($_POST['notify_email'])    ? 1 : 0;
+    $notify_sms      = isset($_POST['notify_sms'])      ? 1 : 0;
+    $notify_whatsapp = isset($_POST['notify_whatsapp']) ? 1 : 0;
+    $reminder_days   = $_POST['reminder_days'] ?? null;
+    $errors = [];
+
+    if (!in_array($reminder_days, ['1', '2', '7'])) {
+        $errors[] = "El valor del recordatorio no es válido.";
+    }
+
+    if (!$notify_email && !$notify_sms && !$notify_whatsapp) {
+        $errors[] = "Debes seleccionar al menos una opción de notificación.";
+    }
+
+    if (!empty($errors)) {
+        $_SESSION['profile_errors'] = $errors;
+        header('Location: ' . BASE_URL . '/profile#preferences');
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE user_preferences SET
+                notify_email = ?, notify_sms = ?, notify_whatsapp = ?, reminder_days = ?, updated_at = NOW()
+            WHERE user_id = ?
+        ");
+        $stmt->execute([
+            $notify_email,
+            $notify_sms,
+            $notify_whatsapp,
+            $reminder_days,
+            $userId
+        ]);
+
+        $_SESSION['profile_success'] = "Preferencias actualizadas correctamente.";
+    } catch (PDOException $e) {
+        $_SESSION['profile_errors'] = ["Error al actualizar: " . $e->getMessage()];
+    }
+
+    header('Location: ' . BASE_URL . '/profile#preferences');
+    exit;
+}
