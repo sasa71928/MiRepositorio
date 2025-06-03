@@ -48,7 +48,9 @@ require_once __DIR__ . '/../../helpers/auth.php';
                     </div>
                 <?php elseif (is_admin()): ?>
                     <!-- Admin -->
-                    <a href="<?= BASE_URL ?>/reports" class="btn btn-primary">Generar Reportes</a>
+                    <div class="appointment-btn">
+                        <a href="<?= BASE_URL ?>/reports">Agendar Cita</a>
+                    </div>
                     <div class="user-menu">
                         <div class="user-toggle">
                             <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
