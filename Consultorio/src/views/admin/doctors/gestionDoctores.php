@@ -282,8 +282,6 @@
     </div>
 </div>
     
-    <?php include 'footerAdmin.php'; ?>
-    
     <script>
         // Funcionalidad para los modales
         document.addEventListener('DOMContentLoaded', function() {
