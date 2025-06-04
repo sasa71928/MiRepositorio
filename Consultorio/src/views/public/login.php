@@ -39,7 +39,7 @@ if (is_logged_in()) {
         </form>
 
         <div class="forgot-password">
-            <a href="<?= BASE_URL ?>/recuperarContraseña.php">¿Olvidó su contraseña?</a>
+            <a href="<?= BASE_URL ?>/recuperarContrasena">¿Olvidó su contraseña?</a>
         </div>
         <div class="create-account">
             <a href="<?= BASE_URL ?>/registro" class="btn btn-create">Crear cuenta</a>

@@ -82,36 +82,65 @@ switch ($request) {
             exit;
         }
         break;
-case '/update_medical':
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        require_once __DIR__ . '/../src/controllers/ProfileController.php';
-        update_medical();
-    } else {
-        header('Location: ' . BASE_URL . '/profile');
-        exit;
-    }
-    break;
+    case '/update_medical':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../src/controllers/ProfileController.php';
+            update_medical();
+        } else {
+            header('Location: ' . BASE_URL . '/profile');
+            exit;
+        }
+        break;
 
-case '/change_password':
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        require_once __DIR__ . '/../src/controllers/ProfileController.php';
-        change_password();
-    } else {
-        header('Location: ' . BASE_URL . '/profile');
-        exit;
-    }
-    break;
+    case '/change_password':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../src/controllers/ProfileController.php';
+            change_password();
+        } else {
+            header('Location: ' . BASE_URL . '/profile');
+            exit;
+        }
+        break;
 
-case '/update_preferences':
+    case '/update_preferences':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../src/controllers/ProfileController.php';
+            update_preferences();
+        } else {
+            header('Location: ' . BASE_URL . '/profile');
+            exit;
+        }
+        break;
+    case '/recuperarContrasena':
+            require_once __DIR__ . '/../src/views/public/recuperarContrasena.php';
+            break;
+    case '/recuperarContrasena/enviarCodigo':
+        require_once __DIR__ . '/../src/controllers/RecoverPasswordController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            solicitar_codigo();
+        }else {
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        }
+        break;
+    case '/recuperarContrasena/verificarCodigo':
+    require_once __DIR__ . '/../src/controllers/RecoverPasswordController.php';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        require_once __DIR__ . '/../src/controllers/ProfileController.php';
-        update_preferences();
-    } else {
-        header('Location: ' . BASE_URL . '/profile');
-        exit;
-    }
+        verificar_codigo();
+    }else {
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        }
     break;
-
+    case '/recuperarContrasena/resetPassword':
+        require_once __DIR__ . '/../src/controllers/RecoverPasswordController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            reset_password();
+        } else {
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        }
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
