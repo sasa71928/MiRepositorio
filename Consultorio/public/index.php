@@ -141,6 +141,15 @@ switch ($request) {
             exit;
         }
         break;
+    case '/adminDoctors':
+        require_once __DIR__ . '/../src/helpers/auth.php';
+        require_login();
+        if ($_SESSION['user']['role'] !== 'admin') {
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        }
+        require_once __DIR__ . '/../src/views/admin/vistaAdmin.php';
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

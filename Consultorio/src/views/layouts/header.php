@@ -59,7 +59,7 @@ require_once __DIR__ . '/../../helpers/auth.php';
                         <div class="user-dropdown">
                             <ul>
                                 <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
-                                <li><a href="<?= BASE_URL ?>/doctors"><i class="fas fa-user-md"></i> Administrar Médicos</a></li>
+                                <li><a href="<?= BASE_URL ?>/adminDoctors"><i class="fas fa-user-md"></i> Administrar Médicos</a></li>
                                 <li class="divider"></li>
                                 <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                             </ul>
