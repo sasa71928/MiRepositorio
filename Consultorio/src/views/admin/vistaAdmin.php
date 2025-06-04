@@ -56,7 +56,7 @@
                     </div>
                     
                     <div class="quick-access-grid">
-                        <a href="gestionDoctores.php" class="quick-access-card">
+                        <a href="<?= BASE_URL ?>/adminDoctors/gestionar" class="quick-access-card">
                             <div class="quick-access-icon">
                                 <i class="fas fa-user-md"></i>
                             </div>
