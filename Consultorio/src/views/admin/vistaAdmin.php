@@ -31,9 +31,10 @@
                             <div class="stat-icon">
                                 <i class="fas fa-user-md"></i>
                             </div>
-                            <div class="stat-content">
-                                <h3>Total Doctores</h3>
-                            </div>
+                                <div class="stat-content">
+                                    <h3>Total Doctores</h3>
+                                    <p><?= $totalDoctors ?></p>
+                                </div>
                         </div>
                         
                         <div class="stat-card">
@@ -42,6 +43,7 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Total Pacientes</h3>
+                                <p><?= $totalPatients ?></p>
                             </div>
                         </div>
                     </div>
