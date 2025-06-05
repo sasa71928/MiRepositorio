@@ -2,7 +2,19 @@
 require_once __DIR__ . '/../../../controllers/AdminController.php';
 
 $departamentos = obtenerDepartamentos();
-$doctores = obtenerDoctores();
+
+$paginaActual = isset($_GET['pagina']) ? max(1, intval($_GET['pagina'])) : 1;
+$limite = 5;
+$offset = ($paginaActual - 1) * $limite;
+
+$departamentoSeleccionado = $_GET['departamento'] ?? null;
+$nombreBuscado = $_GET['buscar'] ?? null;
+
+
+$doctores = obtenerDoctores($limite, $offset, $departamentoSeleccionado, $nombreBuscado);
+$totalDoctores = contarDoctores($departamentoSeleccionado, $nombreBuscado);
+$totalPaginas = ceil($totalDoctores / $limite);
+$filtroDepartamento = $_GET['departamento'] ?? '';
 
 ?>
 
@@ -62,13 +74,13 @@ $doctores = obtenerDoctores();
                 <section class="filters-section">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar doctor...">
+                        <input type="text" id="buscarDoctor" placeholder="Buscar doctor..." value="<?= htmlspecialchars($nombreBuscado) ?>">
                     </div>
                     <div class="filter-options">
                         <select id="filtroDepartamento">
                             <option value="">Todos los departamentos</option>
                             <?php foreach ($departamentos as $dep): ?>
-                                <option value="<?= $dep['id'] ?>">
+                                <option value="<?= $dep['id'] ?>" <?= ($dep['id'] == $filtroDepartamento) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($dep['name']) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -92,24 +104,34 @@ $doctores = obtenerDoctores();
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($doctores as $doc): ?>
+                                <?php if (count($doctores) === 0): ?>
                                     <tr>
-                                        <td><?= str_pad($doc['id'], 3, '0', STR_PAD_LEFT) ?></td>
-                                        <td><?= htmlspecialchars($doc['nombre']) ?></td>
-                                        <td><?= htmlspecialchars($doc['departamento']) ?></td>
-                                        <td><?= htmlspecialchars($doc['email']) ?></td>
-                                        <td><?= htmlspecialchars($doc['phone']) ?></td>
-                                        <td class="actions-cell">
-                                            <button class="btn-icon btn-edit" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-icon btn-delete" title="Eliminar" data-id="<?= $doc['id'] ?>" data-name="<?= htmlspecialchars($doc['nombre']) ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                        <td colspan="6" style="text-align: center; padding: 20px; color: #999;">
+                                            No se encontraron doctores que coincidan con la búsqueda o filtro seleccionado.
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php else: ?>
+                                    <?php foreach ($doctores as $doctor): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($doctor['id']) ?></td>
+                                            <td><?= htmlspecialchars($doctor['nombre']) ?></td>
+                                            <td><?= htmlspecialchars($doctor['departamento']) ?></td>
+                                            <td><?= htmlspecialchars($doctor['email']) ?></td>
+                                            <td><?= htmlspecialchars($doctor['phone']) ?></td>
+                                            <td class="actions-cell">
+                                                <button class="btn-icon btn-edit" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-icon btn-delete" title="Eliminar" data-id="
+                                                <?= $doc['id'] ?>" data-name="<?= htmlspecialchars($doc['nombre']) ?>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
+
 
                         </table>
                     </div>
@@ -508,6 +530,35 @@ $doctores = obtenerDoctores();
             }
         });
                 });
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const filtroDepartamento = document.getElementById('filtroDepartamento');
+    const buscarDoctor = document.getElementById('buscarDoctor');
+
+    // Evento para filtro de departamento
+    filtroDepartamento.addEventListener('change', () => {
+        actualizarURL();
+    });
+
+    // Evento para enter en búsqueda
+    buscarDoctor.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            actualizarURL();
+        }
+    });
+
+    function actualizarURL() {
+        const departamento = filtroDepartamento.value;
+        const buscar = buscarDoctor.value.trim();
+        const parametros = new URLSearchParams();
+
+        if (departamento) parametros.set('departamento', departamento);
+        if (buscar) parametros.set('buscar', buscar);
+
+        window.location.href = '?' + parametros.toString();
+    }
+});
     </script>
 </body>
 </html>
