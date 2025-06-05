@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../../../controllers/AdminController.php';
 
 $departamentos = obtenerDepartamentos();
+$doctores = obtenerDoctores();
+
 ?>
 
 
@@ -63,14 +65,15 @@ $departamentos = obtenerDepartamentos();
                         <input type="text" placeholder="Buscar doctor...">
                     </div>
                     <div class="filter-options">
-                        <select>
-                            <option value="">Todas los departamentos</option>
-                            <option value="cardiologia">Pediatría</option>
-                            <option value="pediatria">Medicina General</option>
-                            <option value="general">Imagenología</option>
-                            <option value="dermatologia">Laboratorio Clínico</option>
-                            <option value="dermatologia">Enfermería</option>
+                        <select id="filtroDepartamento">
+                            <option value="">Todos los departamentos</option>
+                            <?php foreach ($departamentos as $dep): ?>
+                                <option value="<?= $dep['id'] ?>">
+                                    <?= htmlspecialchars($dep['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
+
                     </div>
                 </section>
                 
@@ -89,67 +92,25 @@ $departamentos = obtenerDepartamentos();
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>001</td>
-                                    <td>Dr. Carlos Rodríguez</td>
-                                    <td>Medicina General</td>
-                                    <td>carlos.rodriguez@clinigest.com</td>
-                                    <td>555-123-4567</td>
-                                    <td class="actions-cell">
-                                        <button class="btn-icon btn-edit" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn-icon btn-delete" title="Eliminar" data-id="001" data-name="Dr. Carlos Rodríguez">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>002</td>
-                                    <td>Dra. Ana Martínez</td>
-                                    <td>Pediatría</td>
-                                    <td>ana.martinez@clinigest.com</td>
-                                    <td>555-234-5678</td>
-                                    <td class="actions-cell">
-                                        <button class="btn-icon btn-edit" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn-icon btn-delete" title="Eliminar" data-id="002" data-name="Dra. Ana Martínez">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>003</td>
-                                    <td>Dr. Miguel Sánchez</td>
-                                    <td>Cardiología</td>
-                                    <td>miguel.sanchez@clinigest.com</td>
-                                    <td>555-345-6789</td>
-                                    <td class="actions-cell">
-                                        <button class="btn-icon btn-edit" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn-icon btn-delete" title="Eliminar" data-id="003" data-name="Dr. Miguel Sánchez">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>004</td>
-                                    <td>Dra. Laura Gómez</td>
-                                    <td>Dermatología</td>
-                                    <td>laura.gomez@clinigest.com</td>
-                                    <td>555-456-7890</td>
-                                    <td class="actions-cell">
-                                        <button class="btn-icon btn-edit" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn-icon btn-delete" title="Eliminar" data-id="004" data-name="Dra. Laura Gómez">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                <?php foreach ($doctores as $doc): ?>
+                                    <tr>
+                                        <td><?= str_pad($doc['id'], 3, '0', STR_PAD_LEFT) ?></td>
+                                        <td><?= htmlspecialchars($doc['nombre']) ?></td>
+                                        <td><?= htmlspecialchars($doc['departamento']) ?></td>
+                                        <td><?= htmlspecialchars($doc['email']) ?></td>
+                                        <td><?= htmlspecialchars($doc['phone']) ?></td>
+                                        <td class="actions-cell">
+                                            <button class="btn-icon btn-edit" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon btn-delete" title="Eliminar" data-id="<?= $doc['id'] ?>" data-name="<?= htmlspecialchars($doc['nombre']) ?>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
+
                         </table>
                     </div>
                     
@@ -219,7 +180,7 @@ $departamentos = obtenerDepartamentos();
                         </div>
                         <div class="form-group">
                             <label for="departamento">Departamento</label>
-                            <select id="departamento" name="departamento_id" required>
+                            <select id="departamento" name="department_id" required>
                                 <?php foreach ($departamentos as $dep): ?>
                                     <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
                                 <?php endforeach; ?>
@@ -469,84 +430,84 @@ $departamentos = obtenerDepartamentos();
             });
 
             // Referencias para el modal de editar
-const modalEditarDoctor = document.getElementById('modalEditarDoctor');
-const btnsEditar = document.querySelectorAll('.btn-edit');
-const btnCancelarEditar = document.getElementById('btnCancelarEditar');
-const btnConfirmarEditar = document.getElementById('btnConfirmarEditar');
+        const modalEditarDoctor = document.getElementById('modalEditarDoctor');
+        const btnsEditar = document.querySelectorAll('.btn-edit');
+        const btnCancelarEditar = document.getElementById('btnCancelarEditar');
+        const btnConfirmarEditar = document.getElementById('btnConfirmarEditar');
 
-// Configurar botones de editar
-btnsEditar.forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Obtener datos del doctor desde la fila de la tabla
-        const row = this.closest('tr');
-        const id = row.cells[0].textContent;
-        const nombre = row.cells[1].textContent;
-        const departamento = row.cells[2].textContent;
-        const email = row.cells[3].textContent;
-        const telefono = row.cells[4].textContent;
-        
-        // Rellenar el formulario con los datos actuales
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_nombre').value = nombre;
-        
-        // Seleccionar el departamento correcto en el dropdown
-        const departamentoSelect = document.getElementById('edit_especialidad');
-        for (let i = 0; i < departamentoSelect.options.length; i++) {
-            if (departamentoSelect.options[i].text === departamento) {
-                departamentoSelect.selectedIndex = i;
-                break;
-            }
-        }
-        
-        document.getElementById('edit_email').value = email;
-        document.getElementById('edit_telefono').value = telefono;
-        
-        // Para la cédula profesional, podríamos tener un valor por defecto o dejarlo vacío
-        // En un sistema real, estos datos vendrían de la base de datos
-        document.getElementById('edit_cedula').value = "PROF" + id + "XYZ";
-        
-        // Mostrar el modal
-        modalEditarDoctor.style.display = 'flex';
-    });
-});
+        // Configurar botones de editar
+        btnsEditar.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Obtener datos del doctor desde la fila de la tabla
+                const row = this.closest('tr');
+                const id = row.cells[0].textContent;
+                const nombre = row.cells[1].textContent;
+                const departamento = row.cells[2].textContent;
+                const email = row.cells[3].textContent;
+                const telefono = row.cells[4].textContent;
+                
+                // Rellenar el formulario con los datos actuales
+                document.getElementById('edit_id').value = id;
+                document.getElementById('edit_nombre').value = nombre;
+                
+                // Seleccionar el departamento correcto en el dropdown
+                const departamentoSelect = document.getElementById('edit_especialidad');
+                for (let i = 0; i < departamentoSelect.options.length; i++) {
+                    if (departamentoSelect.options[i].text === departamento) {
+                        departamentoSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+                
+                document.getElementById('edit_email').value = email;
+                document.getElementById('edit_telefono').value = telefono;
+                
+                // Para la cédula profesional, podríamos tener un valor por defecto o dejarlo vacío
+                // En un sistema real, estos datos vendrían de la base de datos
+                document.getElementById('edit_cedula').value = "PROF" + id + "XYZ";
+                
+                // Mostrar el modal
+                modalEditarDoctor.style.display = 'flex';
+            });
+        });
 
-// Cancelar editar doctor
-btnCancelarEditar.addEventListener('click', function() {
-    modalEditarDoctor.style.display = 'none';
-    document.getElementById('formEditarDoctor').reset();
-});
+        // Cancelar editar doctor
+        btnCancelarEditar.addEventListener('click', function() {
+            modalEditarDoctor.style.display = 'none';
+            document.getElementById('formEditarDoctor').reset();
+        });
 
-// Confirmar editar doctor
-btnConfirmarEditar.addEventListener('click', function() {
-    const form = document.getElementById('formEditarDoctor');
-    if (form.checkValidity()) {
-        // Aquí iría la lógica para enviar los datos actualizados al servidor
-        modalEditarDoctor.style.display = 'none';
-        document.getElementById('mensajeExito').textContent = 'El doctor ha sido actualizado exitosamente.';
-        modalExito.style.display = 'flex';
-        
-        // En un sistema real, aquí actualizaríamos la fila en la tabla con los nuevos datos
-        // Por ahora, solo simulamos que se ha actualizado
-        const doctorId = document.getElementById('edit_id').value;
-        const doctorName = document.getElementById('edit_nombre').value;
-        
-        // Opcional: actualizar la fila en la tabla sin recargar la página
-        const rows = document.querySelectorAll('.doctors-table tbody tr');
-        rows.forEach(row => {
-            if (row.cells[0].textContent === doctorId) {
-                row.cells[1].textContent = doctorName;
-                row.cells[2].textContent = document.getElementById('edit_especialidad').options[document.getElementById('edit_especialidad').selectedIndex].text;
-                row.cells[3].textContent = document.getElementById('edit_email').value;
-                row.cells[4].textContent = document.getElementById('edit_telefono').value;
+        // Confirmar editar doctor
+        btnConfirmarEditar.addEventListener('click', function() {
+            const form = document.getElementById('formEditarDoctor');
+            if (form.checkValidity()) {
+                // Aquí iría la lógica para enviar los datos actualizados al servidor
+                modalEditarDoctor.style.display = 'none';
+                document.getElementById('mensajeExito').textContent = 'El doctor ha sido actualizado exitosamente.';
+                modalExito.style.display = 'flex';
+                
+                // En un sistema real, aquí actualizaríamos la fila en la tabla con los nuevos datos
+                // Por ahora, solo simulamos que se ha actualizado
+                const doctorId = document.getElementById('edit_id').value;
+                const doctorName = document.getElementById('edit_nombre').value;
+                
+                // Opcional: actualizar la fila en la tabla sin recargar la página
+                const rows = document.querySelectorAll('.doctors-table tbody tr');
+                rows.forEach(row => {
+                    if (row.cells[0].textContent === doctorId) {
+                        row.cells[1].textContent = doctorName;
+                        row.cells[2].textContent = document.getElementById('edit_especialidad').options[document.getElementById('edit_especialidad').selectedIndex].text;
+                        row.cells[3].textContent = document.getElementById('edit_email').value;
+                        row.cells[4].textContent = document.getElementById('edit_telefono').value;
+                    }
+                });
+                
+                form.reset();
+            } else {
+                form.reportValidity();
             }
         });
-        
-        form.reset();
-    } else {
-        form.reportValidity();
-    }
-});
-        });
+                });
     </script>
 </body>
 </html>
