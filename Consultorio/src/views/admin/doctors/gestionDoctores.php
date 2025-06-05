@@ -1,3 +1,10 @@
+<?php
+require_once __DIR__ . '/../../../controllers/AdminController.php';
+
+$departamentos = obtenerDepartamentos();
+?>
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,6 +14,28 @@
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/admin.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
+<style>
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+
+    .form-row .form-group {
+        flex: 1 1 45%;
+        min-width: 200px;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+        }
+    }
+
+</style>
+
 <body>
     <?php include_once __DIR__ . '/../../layouts/header.php'; ?>
     <main class="main">
@@ -145,49 +174,90 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="formAgregarDoctor">
-                    <div class="form-group">
-                        <label for="nombre">Nombre Completo</label>
-                        <input type="text" id="nombre" name="nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="especialidad">Departamento</label>
-                        <select id="especialidad" name="especialidad" required>
-                            <option value="medicina_general">Medicina General</option>
-                            <option value="pediatria">Pediatría</option>
-                            <option value="cardiologia">Enfermería</option>
-                            <option value="dermatologia">Imagenología</option>
-                            <option value="neurologia">Laboratorio Clínico</option>
-                        </select>
-                    </div>
+                <form id="formAgregarDoctor" action="<?= BASE_URL ?>/adminDoctors/crearDoctor" method="POST">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="email">Email</label>
+                            <label for="username">Nombre de Usuario</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="first_name">Nombre(s)</label>
+                            <input type="text" id="first_name" name="first_name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="last_name">Apellidos</label>
+                            <input type="text" id="last_name" name="last_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="birthdate">Fecha de Nacimiento</label>
+                            <input type="date" id="birthdate" name="birthdate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender">Género</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Seleccione...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Dirección</label>
+                            <input type="text" id="address" name="address" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Ciudad</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="departamento">Departamento</label>
+                            <select id="departamento" name="departamento_id" required>
+                                <?php foreach ($departamentos as $dep): ?>
+                                    <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico</label>
                             <input type="email" id="email" name="email" required>
                         </div>
                         <div class="form-group">
                             <label for="telefono">Teléfono</label>
-                            <input type="tel" id="telefono" name="telefono" required>
+                            <input type="tel" id="telefono" name="phone" required>
                         </div>
                     </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="cedula">Cédula Profesional</label>
                             <input type="text" id="cedula" name="cedula" required>
                         </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña Temporal</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña Temporal</label>
-                        <input type="password" id="password" name="password" required>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" id="btnCancelarAgregar">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="btnConfirmarAgregar">Guardar Doctor</button>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="btnCancelarAgregar">Cancelar</button>
-                <button class="btn btn-primary" id="btnConfirmarAgregar">Guardar Doctor</button>
-            </div>
         </div>
     </div>
+
     
     <!-- Modal de Confirmación para Eliminar Doctor -->
     <div id="modalConfirmarEliminar" class="modal">
@@ -341,18 +411,41 @@
             });
             
             // Confirmar agregar doctor
-            btnConfirmarAgregar.addEventListener('click', function() {
+            document.getElementById('btnConfirmarAgregar').addEventListener('click', async function () {
                 const form = document.getElementById('formAgregarDoctor');
-                if (form.checkValidity()) {
-                    // Aquí iría la lógica para enviar los datos al servidor
-                    modalAgregarDoctor.style.display = 'none';
-                    document.getElementById('mensajeExito').textContent = 'El doctor ha sido agregado exitosamente.';
-                    modalExito.style.display = 'flex';
-                    form.reset();
-                } else {
+                
+                if (!form.checkValidity()) {
                     form.reportValidity();
+                    return;
+                }
+
+                const formData = new FormData(form);
+                
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Ocultar modal de agregar
+                        document.getElementById('modalAgregarDoctor').style.display = 'none';
+                        
+                        // Mostrar modal de éxito
+                        document.getElementById('mensajeExito').textContent = 'El doctor ha sido agregado exitosamente.';
+                        document.getElementById('modalExito').style.display = 'flex';
+
+                        // Resetear formulario
+                        form.reset();
+                    } else {
+                        alert('❌ Error al guardar el doctor.');
+                    }
+                } catch (err) {
+                    console.error('Error de red o JS:', err);
+                    alert('❌ Ocurrió un error inesperado.');
                 }
             });
+
             
             // Cancelar eliminar doctor
             btnCancelarEliminar.addEventListener('click', function() {
