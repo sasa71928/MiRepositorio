@@ -46,3 +46,20 @@ function obtenerDoctoresConDepartamento() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function obtenerCitasPorUsuario($userId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        SELECT a.id, a.scheduled_at, a.status, a.reason,
+               u.first_name AS doctor_first_name, u.last_name AS doctor_last_name,
+               d.name AS departamento
+        FROM appointments a
+        JOIN users u ON a.doctor_id = u.id
+        JOIN doctors doc ON doc.user_id = u.id
+        JOIN departments d ON doc.department_id = d.id
+        WHERE a.user_id = :user_id
+        ORDER BY a.scheduled_at DESC
+    ");
+    $stmt->execute([':user_id' => $userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

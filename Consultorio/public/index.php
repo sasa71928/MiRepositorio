@@ -208,6 +208,20 @@ switch ($request) {
                 include __DIR__ . '/../src/views/appointments/crearCita.php';
             }
         break;
+        case '/appointments/mine':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            if ($_SESSION['user']['role'] !== 'user') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+            $misCitas = obtenerCitasPorUsuario($_SESSION['user']['id']);
+
+            include __DIR__ . '/../src/views/appointments/misCitas.php';
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
