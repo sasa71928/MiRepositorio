@@ -73,63 +73,62 @@ function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
     $params = [];
 
     $departamento = trim($departamento);
-if ($departamento !== '') {
+    if ($departamento !== '') {
 
-        $sql .= " AND d.name = :departamento";
-        $params[':departamento'] = $departamento;
-    }
+            $sql .= " AND d.name = :departamento";
+            $params[':departamento'] = $departamento;
+        }
 
-    if (!empty($nombre)) {
-        $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
-        $params[':nombre'] = "%$nombre%";
-    }
+        if (!empty($nombre)) {
+            $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
+            $params[':nombre'] = "%$nombre%";
+        }
 
-    $sql .= " LIMIT :limite OFFSET :offset";
-    $stmt = $pdo->prepare($sql);
+        $sql .= " LIMIT :limite OFFSET :offset";
+        $stmt = $pdo->prepare($sql);
 
-    // bindValue necesario para LIMIT y OFFSET como enteros
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
+        // bindValue necesario para LIMIT y OFFSET como enteros
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
 
-    $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-
 function contarDoctores($departamento = '', $nombre = '') {
-    global $pdo;
+        global $pdo;
 
-    $sql = "
-        SELECT COUNT(*) 
-        FROM users u
-        JOIN doctors doc ON u.id = doc.user_id
-        JOIN departments d ON doc.department_id = d.id
-        WHERE u.role_id = 2
-    ";
+        $sql = "
+            SELECT COUNT(*) 
+            FROM users u
+            JOIN doctors doc ON u.id = doc.user_id
+            JOIN departments d ON doc.department_id = d.id
+            WHERE u.role_id = 2
+        ";
 
-    $params = [];
+        $params = [];
 
-$departamento = trim($departamento);
-if ($departamento !== '') {
+    $departamento = trim($departamento);
+    if ($departamento !== '') {
 
-        $sql .= " AND d.name LIKE :departamento";
-        $params[':departamento'] = $departamento;
+            $sql .= " AND d.name LIKE :departamento";
+            $params[':departamento'] = $departamento;
 
-    }
+        }
 
-    if (!empty($nombre)) {
-        $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
-        $params[':nombre'] = "%$nombre%";
-    }
+        if (!empty($nombre)) {
+            $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
+            $params[':nombre'] = "%$nombre%";
+        }
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
 
-    return (int)$stmt->fetchColumn();
+        return (int)$stmt->fetchColumn();
 }
 
 
