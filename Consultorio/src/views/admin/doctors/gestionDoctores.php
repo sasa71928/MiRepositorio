@@ -4,17 +4,15 @@ require_once __DIR__ . '/../../../controllers/AdminController.php';
 $departamentos = obtenerDepartamentos();
 
 $paginaActual = isset($_GET['pagina']) ? max(1, intval($_GET['pagina'])) : 1;
-$limite = 5;
-$offset = ($paginaActual - 1) * $limite;
+$doctoresPorPagina = 5;
+$offset = ($paginaActual - 1) * $doctoresPorPagina;
 
-$departamentoSeleccionado = $_GET['departamento'] ?? null;
-$nombreBuscado = $_GET['buscar'] ?? null;
-
-
-$doctores = obtenerDoctores($limite, $offset, $departamentoSeleccionado, $nombreBuscado);
-$totalDoctores = contarDoctores($departamentoSeleccionado, $nombreBuscado);
-$totalPaginas = ceil($totalDoctores / $limite);
 $filtroDepartamento = $_GET['departamento'] ?? '';
+$nombreBuscado = $_GET['nombre'] ?? '';
+
+$doctores = obtenerDoctores($doctoresPorPagina, $offset, $filtroDepartamento, $nombreBuscado);
+$totalDoctores = contarDoctores($filtroDepartamento, $nombreBuscado);
+$totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
 
 ?>
 
@@ -71,23 +69,47 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
                 </section>
                 
                 <!-- Filtros y Búsqueda -->
-                <section class="filters-section">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="buscarDoctor" placeholder="Buscar doctor..." value="<?= htmlspecialchars($nombreBuscado) ?>">
-                    </div>
-                    <div class="filter-options">
-                        <select id="filtroDepartamento">
-                            <option value="">Todos los departamentos</option>
-                            <?php foreach ($departamentos as $dep): ?>
-                                <option value="<?= $dep['id'] ?>" <?= ($dep['id'] == $filtroDepartamento) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($dep['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                <form method="GET" action="<?= BASE_URL ?>/adminDoctors/gestionar">
+                    <section class="filters-section">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input
+                                type="text"
+                                name="nombre"
+                                placeholder="Buscar doctor..."
+                                value="<?= htmlspecialchars($nombreBuscado) ?>"
+                            >
+                        </div>
 
-                    </div>
-                </section>
+                        <div class="filter-options">
+                            <select name="departamento">
+                                <option value="">Todos los departamentos</option>
+                                <?php foreach ($departamentos as $dep): ?>
+                                    <option value="<?= htmlspecialchars($dep['name']) ?>"
+                                        <?= ($filtroDepartamento === $dep['name']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($dep['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                <div id="filter-actions" class="btn btn-primary">
+                    <a href="<?= BASE_URL ?>/adminDoctors/gestionar" class="btn-limpiar">Limpiar filtros</a>
+                    <style>
+                            .btn-limpiar {
+                            text-decoration: none !important;  /* elimina subrayado */
+                        }
+                        .btn-limpiar:visited {
+                            color: white;
+                            text-decoration: none;
+                        }
+                     </style>
+
+                </div>
+
+                    </section>
+                </form>
+
                 
                 <!-- Lista de Doctores -->
                 <section class="doctors-list-section">
@@ -112,20 +134,35 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($doctores as $doctor): ?>
-                                        <tr>
+                                        <tr data-id="<?= $doctor['id'] ?>">
                                             <td><?= htmlspecialchars($doctor['id']) ?></td>
-                                            <td><?= htmlspecialchars($doctor['nombre']) ?></td>
+                                            <td><?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?></td>
                                             <td><?= htmlspecialchars($doctor['departamento']) ?></td>
                                             <td><?= htmlspecialchars($doctor['email']) ?></td>
                                             <td><?= htmlspecialchars($doctor['phone']) ?></td>
                                             <td class="actions-cell">
-                                                <button class="btn-icon btn-edit" title="Editar">
+                                                <button class="btn-icon btn-edit"
+                                                    data-id="<?= $doctor['id'] ?>"
+                                                    data-username="<?= htmlspecialchars($doctor['username']) ?>"
+                                                    data-first_name="<?= htmlspecialchars($doctor['first_name']) ?>"
+                                                    data-last_name="<?= htmlspecialchars($doctor['last_name']) ?>"
+                                                    data-birthdate="<?= $doctor['birthdate'] ?>"
+                                                    data-gender="<?= $doctor['gender'] ?>"
+                                                    data-address="<?= htmlspecialchars($doctor['address']) ?>"
+                                                    data-city="<?= htmlspecialchars($doctor['city']) ?>"
+                                                    data-departamento_id="<?= $doctor['department_id'] ?>"
+                                                    data-email="<?= htmlspecialchars($doctor['email']) ?>"
+                                                    data-phone="<?= htmlspecialchars($doctor['phone']) ?>"
+                                                    data-cedula="<?= htmlspecialchars($doctor['cedula_profesional']) ?>"
+                                                    title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon btn-delete" title="Eliminar" data-id="
-                                                <?= $doc['id'] ?>" data-name="<?= htmlspecialchars($doc['nombre']) ?>">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                            <button class="btn-icon btn-delete" title="Eliminar"
+                                                    data-id="<?= $doctor['id'] ?>"
+                                                    data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -137,13 +174,26 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
                     </div>
                     
                     <!-- Paginación -->
-                    <div class="pagination">
-                        <button class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
-                        <button class="pagination-btn active">1</button>
-                        <button class="pagination-btn">2</button>
-                        <button class="pagination-btn">3</button>
-                        <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
-                    </div>
+                        <div class="pagination">
+                            <?php if ($paginaActual > 1): ?>
+                                <a href="?pagina=<?= $paginaActual - 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                <a href="?pagina=<?= $i ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>"
+                                class="pagination-btn <?= $i == $paginaActual ? 'active' : '' ?>">
+                                    <?= $i ?>
+                                </a>
+                            <?php endfor; ?>
+
+                            <?php if ($paginaActual < $totalPaginas): ?>
+                                <a href="?pagina=<?= $paginaActual + 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
                 </section>
             </div>
         </div>
@@ -290,43 +340,86 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
             <button class="close-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <form id="formEditarDoctor">
+            <form id="formEditarDoctor" action="<?= BASE_URL ?>/adminDoctors/editarDoctor" method="POST">
                 <input type="hidden" id="edit_id" name="edit_id">
-                <div class="form-group">
-                    <label for="edit_nombre">Nombre Completo</label>
-                    <input type="text" id="edit_nombre" name="edit_nombre" required>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_username">Nombre de Usuario</label>
+                        <input type="text" id="edit_username" name="username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_first_name">Nombre(s)</label>
+                        <input type="text" id="edit_first_name" name="first_name" required>
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="edit_last_name">Apellidos</label>
+                    <input type="text" id="edit_last_name" name="last_name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_birthdate">Fecha de Nacimiento</label>
+                        <input type="date" id="edit_birthdate" name="birthdate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_gender">Género</label>
+                        <select id="edit_gender" name="gender" required>
+                            <option value="">Seleccione...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit_address">Dirección</label>
+                        <input type="text" id="edit_address" name="address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_city">Ciudad</label>
+                        <input type="text" id="edit_city" name="city" required>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="edit_especialidad">Departamento</label>
-                    <select id="edit_especialidad" name="edit_especialidad" required>
-                        <option value="medicina_general">Medicina General</option>
-                        <option value="pediatria">Pediatría</option>
-                        <option value="cardiologia">Enfermería</option>
-                        <option value="dermatologia">Imagenología</option>
-                        <option value="neurologia">Laboratorio Clínico</option>
+                    <select id="edit_especialidad" name="departamento_id" required>
+                        <?php foreach ($departamentos as $dep): ?>
+                            <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
+
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="edit_email">Email</label>
-                        <input type="email" id="edit_email" name="edit_email" required>
+                        <label for="edit_email">Correo Electrónico</label>
+                        <input type="email" id="edit_email" name="email" required>
                     </div>
+
                     <div class="form-group">
                         <label for="edit_telefono">Teléfono</label>
-                        <input type="tel" id="edit_telefono" name="edit_telefono" required>
+                        <input type="tel" id="edit_telefono" name="phone" required>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit_cedula">Cédula Profesional</label>
-                        <input type="text" id="edit_cedula" name="edit_cedula" required>
-                    </div>
+
+                <div class="form-group">
+                    <label for="edit_cedula">Cédula Profesional</label>
+                    <input type="text" id="edit_cedula" name="cedula" required>
                 </div>
+
                 <div class="form-group">
                     <label for="edit_password">Nueva Contraseña (dejar en blanco para mantener la actual)</label>
-                    <input type="password" id="edit_password" name="edit_password">
+                    <input type="password" id="edit_password" name="password">
                 </div>
             </form>
+
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" id="btnCancelarEditar">Cancelar</button>
@@ -459,39 +552,32 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
 
         // Configurar botones de editar
         btnsEditar.forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Obtener datos del doctor desde la fila de la tabla
-                const row = this.closest('tr');
-                const id = row.cells[0].textContent;
-                const nombre = row.cells[1].textContent;
-                const departamento = row.cells[2].textContent;
-                const email = row.cells[3].textContent;
-                const telefono = row.cells[4].textContent;
-                
-                // Rellenar el formulario con los datos actuales
-                document.getElementById('edit_id').value = id;
-                document.getElementById('edit_nombre').value = nombre;
-                
-                // Seleccionar el departamento correcto en el dropdown
-                const departamentoSelect = document.getElementById('edit_especialidad');
-                for (let i = 0; i < departamentoSelect.options.length; i++) {
-                    if (departamentoSelect.options[i].text === departamento) {
-                        departamentoSelect.selectedIndex = i;
-                        break;
-                    }
+            btn.addEventListener('click', function () {
+                const d = this.dataset;
+
+                document.getElementById('edit_id').value = d.id;
+                document.getElementById('edit_username').value = d.username;
+                document.getElementById('edit_first_name').value = d.first_name;
+                document.getElementById('edit_last_name').value = d.last_name;
+                document.getElementById('edit_birthdate').value = d.birthdate;
+                document.getElementById('edit_gender').value = d.gender;
+                document.getElementById('edit_address').value = d.address;
+                document.getElementById('edit_city').value = d.city;
+                document.getElementById('edit_email').value = d.email;
+                document.getElementById('edit_telefono').value = d.phone;
+                document.getElementById('edit_cedula').value = d.cedula;
+
+                // Seleccionar el departamento
+                const depSelect = document.getElementById('edit_especialidad');
+                if (d.departamento_id) {
+                    depSelect.value = d.departamento_id;
                 }
-                
-                document.getElementById('edit_email').value = email;
-                document.getElementById('edit_telefono').value = telefono;
-                
-                // Para la cédula profesional, podríamos tener un valor por defecto o dejarlo vacío
-                // En un sistema real, estos datos vendrían de la base de datos
-                document.getElementById('edit_cedula').value = "PROF" + id + "XYZ";
-                
-                // Mostrar el modal
+
                 modalEditarDoctor.style.display = 'flex';
             });
         });
+
+
 
         // Cancelar editar doctor
         btnCancelarEditar.addEventListener('click', function() {
@@ -499,37 +585,82 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
             document.getElementById('formEditarDoctor').reset();
         });
 
-        // Confirmar editar doctor
-        btnConfirmarEditar.addEventListener('click', function() {
-            const form = document.getElementById('formEditarDoctor');
-            if (form.checkValidity()) {
-                // Aquí iría la lógica para enviar los datos actualizados al servidor
+            // Confirmar editar doctor
+btnConfirmarEditar.addEventListener('click', async function () {
+    const form = document.getElementById('formEditarDoctor');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const data = {
+        id: document.getElementById('edit_id').value,
+        username: document.getElementById('edit_username').value,
+        first_name: document.getElementById('edit_first_name').value,
+        last_name: document.getElementById('edit_last_name').value,
+        birthdate: document.getElementById('edit_birthdate').value,
+        gender: document.getElementById('edit_gender').value,
+        address: document.getElementById('edit_address').value,
+        city: document.getElementById('edit_city').value,
+        departamento_id: document.getElementById('edit_especialidad').value,
+        email: document.getElementById('edit_email').value,
+        phone: document.getElementById('edit_telefono').value,
+        cedula: document.getElementById('edit_cedula').value,
+        password: document.getElementById('edit_password').value
+    };
+
+    console.log("🟢 Datos capturados para actualizar:", data);
+
+    try {
+        const response = await fetch('<?= BASE_URL ?>/adminDoctors/editarDoctor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+            if (response.ok) {
                 modalEditarDoctor.style.display = 'none';
                 document.getElementById('mensajeExito').textContent = 'El doctor ha sido actualizado exitosamente.';
                 modalExito.style.display = 'flex';
-                
-                // En un sistema real, aquí actualizaríamos la fila en la tabla con los nuevos datos
-                // Por ahora, solo simulamos que se ha actualizado
-                const doctorId = document.getElementById('edit_id').value;
-                const doctorName = document.getElementById('edit_nombre').value;
-                
-                // Opcional: actualizar la fila en la tabla sin recargar la página
-                const rows = document.querySelectorAll('.doctors-table tbody tr');
-                rows.forEach(row => {
-                    if (row.cells[0].textContent === doctorId) {
-                        row.cells[1].textContent = doctorName;
-                        row.cells[2].textContent = document.getElementById('edit_especialidad').options[document.getElementById('edit_especialidad').selectedIndex].text;
-                        row.cells[3].textContent = document.getElementById('edit_email').value;
-                        row.cells[4].textContent = document.getElementById('edit_telefono').value;
+
+                // Actualizar la fila en la tabla (sin recargar la página)
+                const fila = document.querySelector(`tr[data-id="${data.id}"]`);
+                if (fila) {
+                    fila.children[1].textContent = data.first_name + ' ' + data.last_name;
+                    fila.children[2].textContent = document.querySelector(`#edit_especialidad option[value="${data.departamento_id}"]`)?.textContent || '';
+                    fila.children[3].textContent = data.email;
+                    fila.children[4].textContent = data.phone;
+
+                    // Actualizar atributos del botón de editar
+                    const btnEditar = fila.querySelector('.btn-edit');
+                    if (btnEditar) {
+                        btnEditar.dataset.username = data.username;
+                        btnEditar.dataset.first_name = data.first_name;
+                        btnEditar.dataset.last_name = data.last_name;
+                        btnEditar.dataset.birthdate = data.birthdate;
+                        btnEditar.dataset.gender = data.gender;
+                        btnEditar.dataset.address = data.address;
+                        btnEditar.dataset.city = data.city;
+                        btnEditar.dataset.departamento_id = data.departamento_id;
+                        btnEditar.dataset.email = data.email;
+                        btnEditar.dataset.phone = data.phone;
+                        btnEditar.dataset.cedula = data.cedula;
                     }
-                });
-                
-                form.reset();
-            } else {
-                form.reportValidity();
+                }
+                    form.reset();
+                    } else {
+                    alert('❌ Error al editar el doctor.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Ocurrió un error inesperado.');
             }
         });
-                });
+
+
+            });
 
         document.addEventListener('DOMContentLoaded', function () {
     const filtroDepartamento = document.getElementById('filtroDepartamento');
@@ -559,6 +690,15 @@ $filtroDepartamento = $_GET['departamento'] ?? '';
         window.location.href = '?' + parametros.toString();
     }
 });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectDepartamento = document.querySelector('select[name="departamento"]');
+        if (selectDepartamento) {
+            selectDepartamento.addEventListener('change', function () {
+                this.form.submit(); // envía el formulario automáticamente
+            });
+        }
+    });
     </script>
 </body>
 </html>

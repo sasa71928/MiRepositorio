@@ -55,58 +55,75 @@ function obtenerDepartamentos() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function obtenerDoctores($limit = 5, $offset = 0, $departamentoId = null, $nombre = null): array {
+function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
     global $pdo;
 
     $sql = "
-        SELECT u.id, CONCAT(u.first_name, ' ', u.last_name) AS nombre,
-               u.email, u.phone, d.name AS departamento,
-               doc.cedula_profesional
+        SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, 
+               u.birthdate, u.gender, u.address, u.city,
+               d.name AS departamento, 
+               doc.cedula_profesional,
+               doc.department_id
         FROM users u
         JOIN doctors doc ON u.id = doc.user_id
-        LEFT JOIN departments d ON doc.department_id = d.id
+        JOIN departments d ON doc.department_id = d.id
         WHERE u.role_id = 2
     ";
 
     $params = [];
 
-    if ($departamentoId) {
-        $sql .= " AND doc.department_id = :departamento";
-        $params[':departamento'] = $departamentoId;
+    $departamento = trim($departamento);
+if ($departamento !== '') {
+
+        $sql .= " AND d.name = :departamento";
+        $params[':departamento'] = $departamento;
     }
 
-    if ($nombre) {
+    if (!empty($nombre)) {
         $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
-        $params[':nombre'] = '%' . $nombre . '%';
+        $params[':nombre'] = "%$nombre%";
     }
 
-    $sql .= " LIMIT :limit OFFSET :offset";
-
+    $sql .= " LIMIT :limite OFFSET :offset";
     $stmt = $pdo->prepare($sql);
-    foreach ($params as $k => $v) {
-        $stmt->bindValue($k, $v);
+
+    // bindValue necesario para LIMIT y OFFSET como enteros
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
     }
-    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+
+    $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function contarDoctores($departamentoId = null, $nombre = null): int {
+
+function contarDoctores($departamento = '', $nombre = '') {
     global $pdo;
 
-    $sql = "SELECT COUNT(*) FROM users u JOIN doctors doc ON u.id = doc.user_id WHERE u.role_id = 2";
+    $sql = "
+        SELECT COUNT(*) 
+        FROM users u
+        JOIN doctors doc ON u.id = doc.user_id
+        JOIN departments d ON doc.department_id = d.id
+        WHERE u.role_id = 2
+    ";
+
     $params = [];
 
-    if ($departamentoId) {
-        $sql .= " AND doc.department_id = :departamento";
-        $params[':departamento'] = $departamentoId;
+$departamento = trim($departamento);
+if ($departamento !== '') {
+
+        $sql .= " AND d.name LIKE :departamento";
+        $params[':departamento'] = $departamento;
+
     }
 
-    if ($nombre) {
+    if (!empty($nombre)) {
         $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
-        $params[':nombre'] = '%' . $nombre . '%';
+        $params[':nombre'] = "%$nombre%";
     }
 
     $stmt = $pdo->prepare($sql);
@@ -114,6 +131,7 @@ function contarDoctores($departamentoId = null, $nombre = null): int {
 
     return (int)$stmt->fetchColumn();
 }
+
 
 function obtenerDoctoresFiltrados($filtroDepartamento = '', $nombreBuscado = '', $limite = 5, $offset = 0) {
     global $pdo;
@@ -150,4 +168,66 @@ function obtenerDoctoresFiltrados($filtroDepartamento = '', $nombreBuscado = '',
 
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function editarDoctor() {
+    global $pdo;
+
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+
+    if (!$data || !isset($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos']);
+        return;
+    }
+
+    $id = $data['id'];
+
+    // Actualiza la tabla `users`
+    $stmt = $pdo->prepare("UPDATE users SET
+        username = :username,
+        first_name = :first_name,
+        last_name = :last_name,
+        email = :email,
+        phone = :phone,
+        birthdate = :birthdate,
+        gender = :gender,
+        address = :address,
+        city = :city
+        " . (!empty($data['password']) ? ", password_hash = :password" : "") . "
+        WHERE id = :id");
+
+    $params = [
+        ':username' => $data['username'],
+        ':first_name' => $data['first_name'],
+        ':last_name' => $data['last_name'],
+        ':email' => $data['email'],
+        ':phone' => $data['phone'],
+        ':birthdate' => $data['birthdate'],
+        ':gender' => $data['gender'],
+        ':address' => $data['address'],
+        ':city' => $data['city'],
+        ':id' => $id
+    ];
+
+    if (!empty($data['password'])) {
+        $params[':password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+    }
+
+    $stmt->execute($params);
+
+    // Actualiza la tabla `doctors`
+    $stmt2 = $pdo->prepare("UPDATE doctors SET 
+        department_id = :department_id,
+        cedula_profesional = :cedula 
+        WHERE user_id = :id");
+
+    $stmt2->execute([
+        ':department_id' => $data['departamento_id'],
+        ':cedula' => $data['cedula'],
+        ':id' => $id
+    ]);
+
+    echo json_encode(['status' => 'ok']);
 }
