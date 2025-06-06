@@ -190,6 +190,24 @@ switch ($request) {
             }
             require_once __DIR__ . '/../../src/views/admin/doctors/gestionDoctores.php';
         break;
+        case '/appointments/create':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            if ($_SESSION['user']['role'] !== 'user') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    crearCita($_POST);
+                    header('Location: ' . BASE_URL . '/appointments/create?success=1');
+                    exit;
+                }else {
+                include __DIR__ . '/../src/views/appointments/crearCita.php';
+            }
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

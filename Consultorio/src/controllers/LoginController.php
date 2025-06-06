@@ -45,6 +45,7 @@ function handleLogin(string $email, string $password): ?string {
                 'last_name'  => $user['last_name'],
                 'email'      => $user['email'],
                 'role'       => $user['role_name'],
+                'phone'      => $user['phone'],
             ];
             header('Location: ' . BASE_URL . '/');
             exit;
