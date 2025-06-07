@@ -222,6 +222,26 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/appointments/misCitas.php';
         break;
+        case '/appointments/cancelar':
+        require_once __DIR__ . '/../src/helpers/auth.php';
+        require_login();
+
+        if ($_SESSION['user']['role'] !== 'user') {
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        }
+
+        if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+            header('Location: ' . BASE_URL . '/appointments/mine');
+            exit;
+        }
+
+        require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+        cancelarCita((int)$_GET['id'], $_SESSION['user']['id']);
+
+        header('Location: ' . BASE_URL . '/appointments/mine');
+        exit;
+
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

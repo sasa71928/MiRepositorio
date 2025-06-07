@@ -63,3 +63,25 @@ function obtenerCitasPorUsuario($userId) {
     $stmt->execute([':user_id' => $userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function cancelarCita($id, $userId) {
+    global $pdo;
+
+    // Verifica que la cita pertenezca al usuario y esté pendiente
+    $stmt = $pdo->prepare("SELECT * FROM appointments WHERE id = :id AND user_id = :user_id AND status = 'pendiente'");
+    $stmt->execute([
+        ':id' => $id,
+        ':user_id' => $userId
+    ]);
+
+    $cita = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($cita) {
+        // Actualiza estado a cancelada
+        $update = $pdo->prepare("UPDATE appointments SET status = 'cancelada' WHERE id = :id");
+        $update->execute([':id' => $id]);
+        return true;
+    }
+
+    return false;
+}
