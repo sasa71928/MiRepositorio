@@ -1,105 +1,95 @@
- <!DOCTYPE html>
+<?php
+require_once __DIR__ . '/../../controllers/RatingController.php';
+require_once __DIR__ . '/../../controllers/AppointmentController.php';
+
+$userId = $_SESSION['user']['id'];
+$valoraciones = obtenerValoracionesUsuario($userId);
+$misCitas = obtenerCitasPorUsuario($userId);
+
+// Citas completadas sin valoración
+$valoradasIds = array_column($valoraciones, 'appointment_id');
+$citasPendientes = array_filter($misCitas, function ($cita) use ($valoradasIds) {
+    return $cita['status'] === 'completada' && !in_array($cita['id'], $valoradasIds);
+});
+?>
+
+
+
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Valoraciones - CliniGest</title>
-    <link href="valoraciones.css" rel="stylesheet">
 </head>
 <body>
     <?php include_once __DIR__.'/../layouts/header.php'; ?>
     
-    <main class="main">
-        <section class="ratings-section">
-            <div class="container">
-                <div class="section-title" data-aos="fade-up">
-                    <h2>Mis Valoraciones</h2>
-                    <p>Gestiona tus valoraciones de médicos y servicios</p>
+<main class="main">
+    <section class="ratings-section">
+        <div class="container">
+            <div class="section-title" data-aos="fade-up">
+                <h2>Mis Valoraciones</h2>
+                <p>Gestiona tus valoraciones de médicos y servicios</p>
+            </div>
+
+            <div class="ratings-container">
+                <div class="ratings-header">
+                    <div class="ratings-tabs">
+                        <button class="tab-btn active" data-tab="my-ratings">Mis Valoraciones</button>
+                        <button class="tab-btn" data-tab="pending-ratings">Pendientes de Valorar</button>
+                    </div>
                 </div>
-                
-                <div class="ratings-container">
-                    <div class="ratings-header">
-                        <div class="ratings-tabs">
-                            <button class="tab-btn active" data-tab="my-ratings">Mis Valoraciones</button>
-                            <button class="tab-btn" data-tab="pending-ratings">Pendientes de Valorar</button>
+
+                <div class="ratings-content">
+                    <!-- Tab: Mis Valoraciones -->
+                    <div id="my-ratings" class="tab-content active">
+                        <div class="ratings-list">
+                            <?php if (empty($valoraciones)): ?>
+                                <p style="text-align:center;">Aún no has realizado ninguna valoración.</p>
+                            <?php else: ?>
+                                <?php foreach ($valoraciones as $val): ?>
+                                <div class="rating-card">
+                                    <div class="rating-header">
+                                        <div class="doctor-info">
+                                            <div>
+                                                <h3>Dr. <?= htmlspecialchars($val['doctor_first_name'] . ' ' . $val['doctor_last_name']) ?></h3>
+                                                <p><?= date('d M, Y', strtotime($val['created_at'])) ?></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rating-body">
+                                        <div class="rating-stars">
+                                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                <i class="<?= $i <= $val['rating'] ? 'fas' : 'far' ?> fa-star"></i>
+                                            <?php endfor; ?>
+                                            <span><?= $val['rating'] ?></span>
+                                        </div>
+                                        <p class="rating-comment"><?= htmlspecialchars($val['comment']) ?></p>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    
-                    <div class="ratings-content">
-                        <div id="my-ratings" class="tab-content active">
-                            <div class="ratings-list">
-                                <!-- Carta de valoracion -->
-                                <div class="rating-card">
-                                    <div class="rating-header">
-                                        <div class="doctor-info">
-                                            <div>
-                                                <h3>Dr. Luis Sánchez</h3>
-                                                <p>Dermatología</p>
-                                            </div>
-                                        </div>
-                                        <div class="rating-date">
-                                            <p>05 May, 2025</p>
-                                        </div>
-                                    </div>
-                                    <div class="rating-body">
-                                        <div class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                            <span>4.0</span>
-                                        </div>
-                                        <p class="rating-comment">
-                                            Excelente atención, el doctor fue muy amable y profesional. El diagnóstico fue acertado y el tratamiento efectivo. Recomendaría al Dr. Sánchez a cualquier persona con problemas dermatológicos.
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <!--Carta de valoracion-->
-                                <div class="rating-card">
-                                    <div class="rating-header">
-                                        <div class="doctor-info">
-                                            <div>
-                                                <h3>Dra. María González</h3>
-                                                <p>Laboratorio</p>
-                                            </div>
-                                        </div>
-                                        <div class="rating-date">
-                                            <p>20 Abr, 2025</p>
-                                        </div>
-                                    </div>
-                                    <div class="rating-body">
-                                        <div class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star-half-alt"></i>
-                                            <span>4.5</span>
-                                        </div>
-                                        <p class="rating-comment">
-                                            Servicio rápido y eficiente. El personal fue muy profesional y los resultados estuvieron listos antes de lo esperado. Las instalaciones son modernas y limpias.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="pending-ratings" class="tab-content">
-                            <div class="ratings-list">
 
-                                <!-- Pendientes de valorar -->
+                    <!-- Tab: Pendientes de Valorar -->
+                    <div id="pending-ratings" class="tab-content">
+                        <div class="ratings-list">
+                            <?php if (empty($citasPendientes)): ?>
+                                <p style="text-align:center;">No tienes valoraciones pendientes.</p>
+                            <?php else: ?>
+                            <?php foreach ($citasPendientes as $cita): ?>
                                 <div class="rating-card pending">
                                     <div class="rating-header">
                                         <div class="doctor-info">
                                             <div>
-                                                <h3></h3>
-                                                <p></p>
+                                                <h3>Dr. <?= htmlspecialchars($cita['doctor_first_name'] . ' ' . $cita['doctor_last_name']) ?></h3>
+                                                <p><?= htmlspecialchars($cita['departamento']) ?></p>
                                             </div>
                                         </div>
                                         <div class="rating-date">
-                                            <p>Consulta: 15 Jun, 2025</p>
+                                            <p>Consulta: <?= date('d M, Y', strtotime($cita['scheduled_at'])) ?></p>
                                         </div>
                                     </div>
                                     <div class="rating-body">
@@ -107,16 +97,28 @@
                                             Tienes pendiente valorar esta consulta. Tu opinión nos ayuda a mejorar nuestros servicios.
                                         </p>
                                     </div>
-                                    <div class="rating-footer">
-                                        <button class="btn btn-primary">Valorar Ahora</button>
-                                    </div>
+
+                                    <button
+                                        class="btn btn-primary valorar-btn"
+                                        data-id="<?= $cita['id'] ?>"
+                                        data-doctor-id="<?= $cita['doctor_id'] ?>"
+                                        data-doctor="<?= htmlspecialchars($cita['doctor_first_name'] . ' ' . $cita['doctor_last_name']) ?>"
+                                    >
+                                        Valorar Ahora
+                                    </button>
                                 </div>
-                            </div>
+                            <?php endforeach; ?>
+
+
+                            <?php endif; ?>
                         </div>
                     </div>
+
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
+
         
         <!-- Modal para valorar la cita -->
         <div class="rating-modal" id="ratingModal">
@@ -132,120 +134,133 @@
                         </div>
                     </div>
                     
-                    <form class="rating-form">
-                        <div class="form-group">
-                            <label>¿Cómo calificarías tu experiencia?</label>
-                            <div class="star-rating">
-                                <i class="far fa-star" data-rating="1"></i>
-                                <i class="far fa-star" data-rating="2"></i>
-                                <i class="far fa-star" data-rating="3"></i>
-                                <i class="far fa-star" data-rating="4"></i>
-                                <i class="far fa-star" data-rating="5"></i>
-                            </div>
+                <form class="rating-form" method="POST" action="<?= BASE_URL ?>/ratings/guardarValoracion">
+                    <input type="hidden" name="appointment_id" id="modal-appointment-id">
+                    <input type="hidden" name="doctor_id" id="modal-doctor-id">
+                    <input type="hidden" name="score" id="modal-score">
+
+                    <div class="form-group">
+                        <label>¿Cómo calificarías tu experiencia?</label>
+                        <div class="star-rating">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="rating-comment">Comentarios (opcional)</label>
-                            <textarea id="rating-comment" class="form-control" rows="4" placeholder="Comparte tu experiencia..."></textarea>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-outline cancel-btn">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Enviar Valoración</button>
-                        </div>
-                    </form>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rating-comment">Comentarios (opcional)</label>
+                        <textarea id="rating-comment" name="comment" class="form-control" rows="4" placeholder="Comparte tu experiencia..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline cancel-btn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Enviar Valoración</button>
+                    </div>
+                </form>
+
                 </div>
             </div>
         </div>
     </main>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    
-                    this.classList.add('active');
-                    
-                    
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
-            
-            // Modal para valorar
-            const rateButtons = document.querySelectorAll('.btn-primary');
-            const ratingModal = document.getElementById('ratingModal');
-            const closeBtn = document.querySelector('.close-btn');
-            const cancelBtn = document.querySelector('.cancel-btn');
-            
-            rateButtons.forEach(button => {
-                if (button.textContent === 'Valorar Ahora') {
-                    button.addEventListener('click', function() {
-                        ratingModal.style.display = 'flex';
-                    });
-                }
-            });
-            
-            closeBtn.addEventListener('click', function() {
-                ratingModal.style.display = 'none';
-            });
-            
-            cancelBtn.addEventListener('click', function() {
-                ratingModal.style.display = 'none';
-            });
-            
-            // Empezar a valorar
-            const stars = document.querySelectorAll('.star-rating i');
-            
-            stars.forEach(star => {
-                star.addEventListener('mouseover', function() {
-                    const rating = this.getAttribute('data-rating');
-                    highlightStars(rating);
-                });
-                
-                star.addEventListener('mouseout', function() {
-                    resetStars();
-                });
-                
-                star.addEventListener('click', function() {
-                    const rating = this.getAttribute('data-rating');
-                    setRating(rating);
-                });
-            });
-            
-            function highlightStars(rating) {
-                stars.forEach(star => {
-                    const starRating = star.getAttribute('data-rating');
-                    if (starRating <= rating) {
-                        star.classList.remove('far');
-                        star.classList.add('fas');
-                    } else {
-                        star.classList.remove('fas');
-                        star.classList.add('far');
-                    }
-                });
-            }
-            
-            function resetStars() {
-                stars.forEach(star => {
-                    star.classList.remove('fas');
-                    star.classList.add('far');
-                });
-            }
-            
-            function setRating(rating) {
-                // aqui es donde se guarda la valoracion
-                console.log('Rating set to: ' + rating);
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const doctorIdInput = document.getElementById('modal-doctor-id');
+    const valorarBtns = document.querySelectorAll('.valorar-btn');
+    const ratingModal = document.getElementById('ratingModal');
+    const closeBtn = document.querySelector('.close-btn');
+    const cancelBtn = document.querySelector('.cancel-btn');
+    const appointmentIdInput = document.getElementById('modal-appointment-id');
+    const doctorNameField = document.querySelector('#ratingModal .doctor-info h4');
+    const scoreInput = document.getElementById('modal-score');
+
+    // ✅ Define funciones primero
+    function highlightStars(rating) {
+        stars.forEach(star => {
+            const starRating = star.getAttribute('data-rating');
+            if (starRating <= rating) {
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('fas');
+                star.classList.add('far');
             }
         });
-    </script>
+    }
+
+    function resetStars() {
+        scoreInput.value = 0;
+        stars.forEach(star => {
+            star.classList.remove('fas');
+            star.classList.add('far');
+        });
+    }
+
+    function setRating(rating) {
+        scoreInput.value = rating;
+        highlightStars(rating);
+    }
+
+    // Pestañas
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // Mostrar modal de valoración
+        valorarBtns.forEach(button => {
+            button.addEventListener('click', function () {
+                const doctor = this.dataset.doctor;
+                const doctorId = this.dataset.doctorId;
+                const appointmentId = this.dataset.id;
+
+                doctorNameField.textContent = 'Dr. ' + doctor;
+                doctorIdInput.value = doctorId; // 👈 aquí
+                appointmentIdInput.value = appointmentId;
+                resetStars();
+                ratingModal.style.display = 'flex';
+            });
+        });
+
+    // Cierre del modal
+    closeBtn.addEventListener('click', () => {
+        ratingModal.style.display = 'none';
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        ratingModal.style.display = 'none';
+    });
+
+    // Estrellas interactivas
+    const stars = document.querySelectorAll('.star-rating i');
+
+    stars.forEach(star => {
+        star.addEventListener('mouseover', function () {
+            highlightStars(this.dataset.rating);
+        });
+
+        star.addEventListener('mouseout', function () {
+            highlightStars(scoreInput.value);
+        });
+
+        star.addEventListener('click', function () {
+            setRating(this.dataset.rating);
+        });
+    });
+});
+</script>
+
+
 </body>
 </html>
 

@@ -50,7 +50,7 @@ function obtenerCitasPorUsuario($userId) {
     global $pdo;
 
     $stmt = $pdo->prepare("
-        SELECT a.id, a.scheduled_at, a.status, a.reason,
+        SELECT a.id, a.scheduled_at, a.status, a.reason, a.doctor_id,
                u.first_name AS doctor_first_name, u.last_name AS doctor_last_name,
                d.name AS departamento
         FROM appointments a
@@ -63,6 +63,7 @@ function obtenerCitasPorUsuario($userId) {
     $stmt->execute([':user_id' => $userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 
 function cancelarCita($id, $userId) {
     global $pdo;

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../controllers/RatingController.php';
+$valoraciones = obtenerValoracionesUsuario($_SESSION['user']['id']);
 $proximas = [];
 $pasadas = [];
 $canceladas = [];
@@ -100,14 +102,20 @@ foreach ($misCitas as $cita) {
                                         <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
                                         </div>
                                         <div class="appointment-status <?= $cita['status'] === 'completada' ? 'completed' : 'vencida' ?>">
-                                        <span><?= $cita['status'] === 'completada' ? 'Completada' : 'Vencida' ?></span>
+                                        <span><?= $cita['status'] === 'completada' ? 'Valorada' : 'Vencida' ?></span>
                                         </div>
                                     </div>
-                                    <?php if ($cita['status'] === 'completada'): ?>
-                                        <div class="appointment-actions">
-                                            <a href="<?= BASE_URL ?>/ratings/valoraciones" class="btn btn-primary">Valorar</a>
-                                        </div>
-                                    <?php endif; ?>
+                                    </div>
+                                        <?php
+                                        $yaValorada = in_array($cita['id'], array_column($valoraciones, 'appointment_id'));
+                                        ?>
+                                        <?php if ($cita['status'] === 'completada' && !$yaValorada): ?>
+                                            <div class="appointment-actions">
+                                                <button class="btn btn-primary">Valorar</button>
+                                            </div>
+                                        <?php endif; ?>
+
+                                    </div>
                                     </div>
                                 <?php endforeach; ?>
                                 <?php endif; ?>

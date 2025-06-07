@@ -250,18 +250,26 @@ switch ($request) {
                 exit;
             }
 
-            //require_once __DIR__ . '/../src/controllers/RatingController.php';
+            require_once __DIR__ . '/../src/controllers/RatingController.php';
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
 
-            if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-                $appointmentId = (int)$_GET['id'];
-                // Mostrar formulario de valoración para esa cita
-                include __DIR__ . '/../src/views/ratings/valoraciones.php';
-            } else {
-                // Mostrar listado de valoraciones del usuario
-                include __DIR__ . '/../src/views/ratings/valoraciones.php';
+            $userId = $_SESSION['user']['id'];
+            $valoraciones = obtenerValoracionesUsuario($userId);
+            $citasPendientes = obtenerCitasCompletadasNoValoradas($userId);
+
+            include __DIR__ . '/../src/views/ratings/valoraciones.php';
+            break;
+        case '/ratings/guardarValoracion':
+            require_once __DIR__ . '/../src/helpers/auth.php'; 
+            require_once __DIR__ . '/../src/controllers/RatingController.php';
+            require_login();
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                guardarValoracion($_POST);
+                header('Location: ' . BASE_URL . '/ratings/valoraciones?success=1');
+                exit;
             }
             break;
-
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
