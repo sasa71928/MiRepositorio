@@ -250,18 +250,18 @@ switch ($request) {
                 exit;
             }
 
-            if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-                header('Location: ' . BASE_URL . '/appointments/mine');
-                exit;
+            //require_once __DIR__ . '/../src/controllers/RatingController.php';
+
+            if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+                $appointmentId = (int)$_GET['id'];
+                // Mostrar formulario de valoración para esa cita
+                include __DIR__ . '/../src/views/ratings/valoraciones.php';
+            } else {
+                // Mostrar listado de valoraciones del usuario
+                include __DIR__ . '/../src/views/ratings/valoraciones.php';
             }
-
-            $appointmentId = (int)$_GET['id'];
-
-            // Puedes usar esta función para verificar si la cita pertenece al usuario antes de mostrar la vista
-            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
-
-            include __DIR__ . '/../src/views/ratings/valoraciones.php';
             break;
+
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

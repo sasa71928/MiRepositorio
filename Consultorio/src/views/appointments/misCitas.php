@@ -105,7 +105,7 @@ foreach ($misCitas as $cita) {
                                     </div>
                                     <?php if ($cita['status'] === 'completada'): ?>
                                         <div class="appointment-actions">
-                                            <a href="<?= BASE_URL ?>/ratings/valoraciones?id=<?= $cita['id'] ?>" class="btn btn-primary">Valorar</a>
+                                            <a href="<?= BASE_URL ?>/ratings/valoraciones" class="btn btn-primary">Valorar</a>
                                         </div>
                                     <?php endif; ?>
                                     </div>

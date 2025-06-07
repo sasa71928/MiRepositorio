@@ -96,7 +96,7 @@ require_once __DIR__ . '/../../helpers/auth.php';
                             <ul>
                                 <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
                                 <li><a href="<?= BASE_URL ?>/appointments/mine"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
-                                <li><a href="<?= BASE_URL ?>/ratings"><i class="fas fa-star"></i> Valoraciones</a></li>
+                                <li><a href="<?= BASE_URL ?>/ratings/valoraciones"><i class="fas fa-star"></i> Valoraciones</a></li>
                                 <li class="divider"></li>
                                 <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                             </ul>
