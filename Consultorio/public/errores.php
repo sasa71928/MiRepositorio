@@ -1,8 +1,15 @@
 <?php
-http_response_code(404);
-$config = include __DIR__ . '/../src/config/config.php';
-if (! defined('BASE_URL')) {
-    define('BASE_URL', rtrim($config['base_url'], '/'));
+session_start(); // ✅ Asegúrate de que esto esté arriba si no lo has hecho
+$homeUrl = BASE_URL . '/';
+if (isset($_SESSION['user'])) {
+    $rol = $_SESSION['user']['role'];
+    if ($rol === 'user') {
+        $homeUrl = BASE_URL . '/appointments/mine';
+    } elseif ($rol === 'doctor') {
+        $homeUrl = BASE_URL . '/doctor-home';
+    } elseif ($rol === 'admin') {
+        $homeUrl = BASE_URL . '/adminDoctors';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -16,7 +23,7 @@ if (! defined('BASE_URL')) {
   <div class="error-container">
     <h1>404</h1>
     <p>Lo sentimos, la página que buscas no existe.</p>
-    <a href="<?= BASE_URL ?>/" class="btn">Volver al inicio</a>
+<a href="<?= $homeUrl ?>" class="btn">Volver al inicio</a>
   </div>
 </body>
 </html>

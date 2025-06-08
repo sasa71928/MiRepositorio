@@ -1,16 +1,15 @@
 <?php
-// src/views/layouts/header.php
 
-// 1) Iniciar sesión si no está activa
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// 2) Incluir helpers
 require_once __DIR__ . '/../../helpers/auth.php';
 
-// 3) (Opcional) Definir BASE_URL si aún no existe
-//   Ya lo cubrimos dentro de auth.php, así que no es estrictamente necesario repetirlo aquí.
+$inicio = BASE_URL . (
+    is_admin() ? '/adminDoctors' :
+    (is_doctor() ? '/doctor-home' :
+    (is_logged_in() ? '/appointments/mine' : '/'))
+);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -22,90 +21,73 @@ require_once __DIR__ . '/../../helpers/auth.php';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
-    <header class="header">
-        <div class="container header-container">
-            <div class="logo">
-                <h1><a href="<?= BASE_URL ?>/">CliniGest</a></h1>
-            </div>
-            
-            <div class="mobile-menu-toggle" id="mobile-menu-toggle">
-                <i class="fas fa-bars"></i>
-            </div>
-            
-            <nav class="nav-menu">
-                <ul>
-                    <li class="active"><a href="<?= BASE_URL ?>" class="nav-link">Inicio</a></li>
-                    <li><a href="<?= BASE_URL ?>/#servicios" class="nav-link">Servicios</a></li>
-                    <li><a href="<?= BASE_URL ?>/#departamentos" class="nav-link">Departamentos</a></li>
-                </ul>
-            </nav>
-            
-            <div class="header-actions">
+<header class="header">
+    <div class="container header-container">
+        <div class="logo">
+            <h1><a href="<?= $inicio ?>">CliniGest</a></h1>
+        </div>
+        <nav class="nav-menu">
+            <ul>
                 <?php if (!is_logged_in()): ?>
-                    <!-- Invitado -->
+                    <li class="active"><a href="<?= BASE_URL ?>" class="nav-link">Inicio</a></li>
+                    <li><a href="<?= BASE_URL ?>/#servicios">Servicios</a></li>
+                    <li><a href="<?= BASE_URL ?>/#departamentos">Departamentos</a></li>
+
+                <?php elseif (is_admin()): ?>
+                    <li><a href="<?= BASE_URL ?>/adminDoctors">Médicos</a></li>
+                    <li><a href="<?= BASE_URL ?>/reports">Reportes</a></li>
+
+                <?php elseif (is_doctor()): ?>
+                    <li><a href="<?= BASE_URL ?>/doctor-home">Inicio</a></li>
+                    <li><a href="<?= BASE_URL ?>/reportes.php">Reportes</a></li>
+                    <li><a href="<?= BASE_URL ?>/listaPacientes.php">Pacientes</a></li>
+
+                <?php else: ?>
+                    <li><a href="<?= BASE_URL ?>/appointments/mine">Mis Citas</a></li>
+                    <li><a href="<?= BASE_URL ?>/ratings/valoraciones">Valoraciones</a></li>
+                <?php endif; ?>
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <?php if (!is_logged_in()): ?>
                     <div class="appointment-btn">
                         <a href="<?= BASE_URL ?>/login" class="btn btn-primary">Iniciar Sesión</a>
                     </div>
-                <?php elseif (is_admin()): ?>
-                    <!-- Admin -->
-                    <div class="appointment-btn">
-                        <a href="<?= BASE_URL ?>/reports">Generar Reporte</a>
+            <?php else: ?>
+                <div class="appointment-btn">
+                    <?php if (is_admin()): ?>
+                        <a href="<?= BASE_URL ?>/adminDoctors" class="btn btn-primary">Administrar</a>
+                    <?php elseif (is_doctor()): ?>
+                        <a href="<?= BASE_URL ?>/" class="btn btn-primary">Panel Doctor</a>
+                    <?php else: ?>
+                        <a href="<?= BASE_URL ?>/appointments/create" class="btn btn-primary">Agendar Cita</a>
+                    <?php endif; ?>
+                </div>
+
+                <div class="user-menu">
+                    <div class="user-toggle">
+                        <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
+                        <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="user-menu">
-                        <div class="user-toggle">
-                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="user-dropdown">
-                            <ul>
-                                <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
-                                <li><a href="<?= BASE_URL ?>/adminDoctors"><i class="fas fa-user-md"></i> Administrar Médicos</a></li>
-                                <li class="divider"></li>
-                                <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                <?php elseif (is_doctor()): ?>
-                    <!-- Doctor -->
-                    <a href="<?= BASE_URL ?>/appointments/mine" class="btn btn-primary">Mis Citas</a>
-                    <div class="user-menu">
-                        <div class="user-toggle">
-                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="user-dropdown">
-                            <ul>
-                                <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
-                                <li><a href="<?= BASE_URL ?>/appointments/mine"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
-                                <li class="divider"></li>
-                                <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <!-- Usuario normal -->
-                    <div class="appointment-btn">
-                        <a href="<?= BASE_URL ?>/appointments/create">Agendar Cita</a>
-                    </div>
-                    <div class="user-menu">
-                        <div class="user-toggle">
-                            <span class="user-name"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="user-dropdown">
-                            <ul>
-                                <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
+                    <div class="user-dropdown">
+                        <ul>
+                            <li><a href="<?= BASE_URL ?>/profile"><i class="fas fa-user"></i> Mi Perfil</a></li>
+                            <?php if (is_doctor()): ?>
+                                <li><a href="<?= BASE_URL ?>/doctor-home"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
+                            <?php elseif (!is_admin()): ?>
                                 <li><a href="<?= BASE_URL ?>/appointments/mine"><i class="fas fa-calendar-check"></i> Mis Citas</a></li>
                                 <li><a href="<?= BASE_URL ?>/ratings/valoraciones"><i class="fas fa-star"></i> Valoraciones</a></li>
-                                <li class="divider"></li>
-                                <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-                            </ul>
-                        </div>
+                            <?php endif; ?>
+                            <li class="divider"></li>
+                            <li><a href="<?= BASE_URL ?>/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                        </ul>
                     </div>
-                <?php endif; ?>
-            </div>
+                </div>
+            <?php endif; ?>
         </div>
-    </header>
+    </div>
+</header>
 
 
 

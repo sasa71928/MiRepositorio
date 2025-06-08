@@ -36,21 +36,32 @@ function handleLogin(string $email, string $password): ?string {
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['user'] = [
-                'id'         => $user['id'],
-                'username'   => $user['username'],   // Asegúrate de haber guardado 'username' al registrar
-                'first_name' => $user['first_name'],
-                'last_name'  => $user['last_name'],
-                'email'      => $user['email'],
-                'role'       => $user['role_name'],
-                'phone'      => $user['phone'],
-            ];
-            header('Location: ' . BASE_URL . '/');
-            exit;
+if ($user && password_verify($password, $user['password_hash'])) {
+    session_regenerate_id(true);
+    $_SESSION['user'] = [
+        'id'         => $user['id'],
+        'username'   => $user['username'],
+        'first_name' => $user['first_name'],
+        'last_name'  => $user['last_name'],
+        'email'      => $user['email'],
+        'role'       => $user['role_name'],
+        'phone'      => $user['phone'],
+    ];
+
+        // 🔁 Redirección personalizada según el rol
+        switch ($_SESSION['user']['role']) {
+            case 'doctor':
+                header('Location: ' . BASE_URL . '/doctor-home');
+                break;
+            case 'admin':
+                header('Location: ' . BASE_URL . '/adminDoctors');
+                break;
+            default:
+                header('Location: ' . BASE_URL . '/');
         }
 
+        exit;
+    }
         return 'Correo o contraseña inválidos.';
 
     } catch (PDOException $ex) {

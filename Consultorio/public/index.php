@@ -28,8 +28,20 @@ if ($request === '' || $request === false) {
 
 switch ($request) {
         case '/':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            if (is_logged_in()) {
+                if (is_admin()) {
+                    header('Location: ' . BASE_URL . '/adminDoctors');
+                } elseif (is_doctor()) {
+                    header('Location: ' . BASE_URL . '/doctor-home');
+                } else {
+                    header('Location: ' . BASE_URL . '/appointments/mine');
+                }
+                exit;
+            }
+
             require_once __DIR__ . '/../src/views/public/welcome.php';
-            break;
+        break;
 
         case '/login':
             require_once __DIR__ . '/../src/controllers/LoginController.php';
@@ -270,6 +282,9 @@ switch ($request) {
                 exit;
             }
             break;
+        case '/doctor-home':
+            require_once __DIR__ . '/../src/views/doctors/doctorVista.php';
+        break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
