@@ -33,3 +33,17 @@ function obtenerCitaPorIdYDoctor($citaId, $doctorId) {
 
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
+
+function cancelarCitaDoctor($citaId, $doctorId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        UPDATE appointments
+        SET status = 'cancelada'
+        WHERE id = :id AND doctor_id = :doctor
+    ");
+    $stmt->execute([
+        ':id' => $citaId,
+        ':doctor' => $doctorId
+    ]);
+}

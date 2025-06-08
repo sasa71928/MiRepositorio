@@ -320,6 +320,26 @@ switch ($request) {
 
             require_once __DIR__ . '/../src/views/doctors/consultaCita.php';
          break;
+        case '/doctor/cancelarCita':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            if ($_SESSION['user']['role'] !== 'doctor') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
+
+            if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+                header('Location: ' . BASE_URL . '/doctor-home');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/DoctorController.php';
+            cancelarCitaDoctor((int)$_GET['id'], $_SESSION['user']['id']);
+
+            header('Location: ' . BASE_URL . '/doctor-home');
+            exit;
+            break;
 
     default:
         // Cualquier otra ruta → 404

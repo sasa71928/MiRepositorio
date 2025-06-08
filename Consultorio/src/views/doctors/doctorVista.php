@@ -106,9 +106,14 @@ $citasFiltradas = $citas;
                                                 <?= ucfirst($cita['status']) ?>
                                             </td>
                                             <td>
-                                                <a href="<?= BASE_URL ?>/consultaCita?id=<?= $cita['id'] ?>" class="action-icon">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
+                                                <a href="<?= BASE_URL ?>/consultaCita?id=<?= $cita['id'] ?>" class="action-icon" title="Ver cita">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+
+                                            <a href="<?= BASE_URL ?>/doctor/cancelarCita?id=<?= $cita['id'] ?>" class="action-icon text-danger" title="Cancelar cita" onclick="return confirm('¿Seguro que deseas cancelar esta cita?')">
+                                                <i class="fas fa-times-circle"></i>
+                                            </a>
+
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
