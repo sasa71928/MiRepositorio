@@ -296,6 +296,30 @@ switch ($request) {
 
             require_once __DIR__ . '/../src/views/doctors/doctorVista.php';
         break;
+        case '/consultaCita':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            if ($_SESSION['user']['role'] !== 'doctor') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
+
+            if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+                header('Location: ' . BASE_URL . '/doctor-home'); // o error 404
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/DoctorController.php';
+            $cita = obtenerCitaPorIdYDoctor($_GET['id'], $_SESSION['user']['id']);
+
+            if (!$cita) {
+                header('Location: ' . BASE_URL . '/doctor-home');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/views/doctors/consultaCita.php';
+         break;
 
     default:
         // Cualquier otra ruta → 404
