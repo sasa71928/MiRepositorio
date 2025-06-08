@@ -48,7 +48,7 @@ switch ($request) {
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = handleLogin($_POST['correo'], $_POST['contrasena']);
                 // after POST, vuelve a mostrar la vista con $error
-                include __DIR__ . '/login.php';
+                include __DIR__ . '/../src/views/public/login.php';
             } else {
                 showLogin();
             }
@@ -283,8 +283,20 @@ switch ($request) {
             }
             break;
         case '/doctor-home':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            if ($_SESSION['user']['role'] !== 'doctor') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/DoctorController.php';
+            $citas = obtenerCitasDelDoctor($_SESSION['user']['id']);
+
             require_once __DIR__ . '/../src/views/doctors/doctorVista.php';
         break;
+
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

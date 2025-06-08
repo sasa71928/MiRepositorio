@@ -1,30 +1,25 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CliniGest - Agenda del Doctor</title>
-    <link href="main.css" rel="stylesheet">
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+<?php
+require_once __DIR__ . '/../../controllers/DoctorController.php';
+require_once __DIR__ . '/../../helpers/auth.php';
 
+require_login();
+$doctorId = $_SESSION['user']['id'];
+$citas = obtenerCitasDelDoctor($doctorId);
+?>
+<body>
     <?php include_once __DIR__.'/../layouts/header.php'; ?>
 
     <main class="main">
-        <!-- Sección de agenda del doctor -->
         <section id="doctor-agenda" class="doctor-agenda section">
             <div class="container">
                 <div class="page-header">
                     <h2>Mi Agenda</h2>
                 </div>
 
-                <!-- Filtros y navegación de calendario -->
                 <div class="calendar-controls">
                     <div class="date-navigation">
                         <button class="nav-btn"><i class="fas fa-chevron-left"></i></button>
-                        <h3>Octubre 2023</h3>
+                        <h3><?= date('F Y') ?></h3>
                         <button class="nav-btn"><i class="fas fa-chevron-right"></i></button>
                     </div>
                     <div class="view-options">
@@ -34,65 +29,30 @@
                     </div>
                 </div>
 
-                <!-- Vista diaria del calendario -->
                 <div class="calendar-day-view">
                     <div class="time-column">
-                        <div class="time-slot">08:00</div>
-                        <div class="time-slot">09:00</div>
-                        <div class="time-slot">10:00</div>
-                        <div class="time-slot">11:00</div>
-                        <div class="time-slot">12:00</div>
-                        <div class="time-slot">13:00</div>
-                        <div class="time-slot">14:00</div>
-                        <div class="time-slot">15:00</div>
-                        <div class="time-slot">16:00</div>
-                        <div class="time-slot">17:00</div>
-                        <div class="time-slot">18:00</div>
+                        <?php for ($h = 8; $h <= 18; $h++): ?>
+                            <div class="time-slot"><?= str_pad($h, 2, '0', STR_PAD_LEFT) ?>:00</div>
+                        <?php endfor; ?>
                     </div>
                     <div class="appointments-column">
-                        <!-- Cita 1 -->
-                        <div class="appointment-item" style="top: 60px; height: 90px;">
-                            <div class="appointment-content consulta">
-                                <div class="appointment-time">09:00 - 09:45</div>
-                                <div class="appointment-title">María López</div>
+                        <?php foreach ($citas as $cita): ?>
+                            <?php
+                                $paciente = htmlspecialchars($cita['first_name'] . ' ' . $cita['last_name']);
+                                $inicio = date('H:i', strtotime($cita['scheduled_at']));
+                                $fin = date('H:i', strtotime('+45 minutes', strtotime($cita['scheduled_at'])));
+                                $top = (intval(date('H', strtotime($cita['scheduled_at']))) - 8) * 60;
+                            ?>
+                            <div class="appointment-item" style="top: <?= $top ?>px; height: 45px;">
+                                <div class="appointment-content consulta">
+                                    <div class="appointment-time"><?= $inicio ?> - <?= $fin ?></div>
+                                    <div class="appointment-title"><?= $paciente ?></div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Cita 2 -->
-                        <div class="appointment-item" style="top: 150px; height: 60px;">
-                            <div class="appointment-content seguimiento">
-                                <div class="appointment-time">10:30 - 11:00</div>
-                                <div class="appointment-title">Juan Pérez</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Cita 3 -->
-                        <div class="appointment-item" style="top: 210px; height: 60px;">
-                            <div class="appointment-content primera-visita">
-                                <div class="appointment-time">11:45 - 12:15</div>
-                                <div class="appointment-title">Ana Martínez</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Cita 4 -->
-                        <div class="appointment-item" style="top: 300px; height: 60px;">
-                            <div class="appointment-content resultados">
-                                <div class="appointment-time">13:15 - 13:45</div>
-                                <div class="appointment-title">Carlos Sánchez</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Cita 5 -->
-                        <div class="appointment-item" style="top: 480px; height: 90px;">
-                            <div class="appointment-content consulta">
-                                <div class="appointment-time">16:00 - 16:45</div>
-                                <div class="appointment-title">Laura Gómez</div>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
-                <!-- Próximas citas -->
                 <div class="upcoming-appointments">
                     <div class="section-header">
                         <h3>Próximas Citas</h3>
@@ -108,46 +68,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>09:00</td>
-                                    <td>María López</td>
-                                    <td><span class="status completed"></span></td>
-                                    <td>
-                                        <a href="consultaCita.php?id=1" class="action-icon"><i class="fas fa-eye"></i></a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>10:30</td>
-                                    <td>Juan Pérez</td>
-                                    <td><span class="status active"></span></td>
-                                    <td>
-                                        <a href="consultaCita.php?id=2" class="action-icon"><i class="fas fa-eye"></i></a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>11:45</td>
-                                    <td>Ana Martínez</td>
-                                    <td><span class="status pending"></span></td>
-                                    <td>
-                                        <a href="consultaCita.php?id=3" class="action-icon"><i class="fas fa-eye"></i></a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>13:15</td>
-                                    <td>Carlos Sánchez</td>
-                                    <td><span class="status pending"></span></td>
-                                    <td>
-                                        <a href="consultaCita.php?id=4" class="action-icon"><i class="fas fa-eye"></i></a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>16:00</td>
-                                    <td>Laura Gómez</td>
-                                    <td><span class="status pending"></span></td>
-                                    <td>
-                                        <a href="consultaCita.php?id=5" class="action-icon"><i class="fas fa-eye"></i></a>
-                                    </td>
-                                </tr>
+                                <?php foreach ($citas as $cita): ?>
+                                    <tr>
+                                        <td><?= date('H:i', strtotime($cita['scheduled_at'])) ?></td>
+                                        <td><?= htmlspecialchars($cita['first_name'] . ' ' . $cita['last_name']) ?></td>
+                                        <td><span class="status <?= htmlspecialchars($cita['status']) ?>"></span></td>
+                                        <td>
+                                            <a href="consultaCita.php?id=<?= $cita['id'] ?>" class="action-icon">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
@@ -156,36 +88,24 @@
         </section>
     </main>
 
-    <!-- Script para la funcionalidad del calendario -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Cambiar entre vistas de calendario
             const viewButtons = document.querySelectorAll('.view-btn');
             viewButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     viewButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
-                    // Aquí se implementaría la lógica para cambiar la vista
                 });
             });
 
-            // Funcionalidad para los botones de navegación
             const prevButton = document.querySelector('.nav-btn:first-child');
             const nextButton = document.querySelector('.nav-btn:last-child');
-            
-            prevButton.addEventListener('click', function() {
-                // Lógica para ir al día/semana/mes anterior
-                console.log('Navegando al período anterior');
-            });
-            
-            nextButton.addEventListener('click', function() {
-                // Lógica para ir al día/semana/mes siguiente
-                console.log('Navegando al período siguiente');
-            });
+            prevButton.addEventListener('click', () => console.log('Prev'));
+            nextButton.addEventListener('click', () => console.log('Next'));
         });
     </script>
-
 </body>
+
 </html>
 
 <style>
