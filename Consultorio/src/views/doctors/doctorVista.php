@@ -6,9 +6,8 @@ require_login();
 $doctorId = $_SESSION['user']['id'];
 $citas = obtenerCitasDelDoctor($doctorId);
 
-$citasFiltradas = array_filter($citas, function($cita) {
-    return in_array($cita['status'], ['pendiente', 'confirmada']);
-});
+$citasFiltradas = $citas;
+
 ?>
 
 <body>
@@ -50,7 +49,7 @@ $citasFiltradas = array_filter($citas, function($cita) {
                                         $fin = date('H:i', strtotime('+45 minutes', strtotime($cita['scheduled_at'])));
                                         $top = (intval(date('H', strtotime($cita['scheduled_at']))) - 8) * 60;
                                     ?>
-                    <div class="appointment-item"
+                    <div class="appointment-item <?= htmlspecialchars($cita['status']) ?>"
                         data-date="<?= date('Y-m-d', strtotime($cita['scheduled_at'])) ?>"
                         data-top="<?= $top ?>">
 
@@ -70,7 +69,7 @@ $citasFiltradas = array_filter($citas, function($cita) {
         <div class="week-grid"></div>
     </div>
     <div id="month-view" class="calendar-view" style="display: none;">
-        <p>Vista mensual próximamente...</p>
+        <div class="month-grid"></div>
     </div>
 </div>
 
@@ -90,18 +89,20 @@ $citasFiltradas = array_filter($citas, function($cita) {
                                 </tr>
                             </thead>
                             <tbody>
-                                    <?php if (empty($citasFiltradas)): ?>
-                                        <tr>
-                                            <td colspan="4" style="text-align: center;">Sin citas próximas</td>
-                                        </tr>
-                                    <?php else: ?>
-                                        <?php foreach ($citasFiltradas as $cita): ?>
-
+                                <?php
+                                    $pendientes = array_filter($citasFiltradas, fn($cita) => $cita['status'] === 'pendiente');
+                                ?>
+                                <?php if (empty($pendientes)): ?>
+                                    <tr>
+                                        <td colspan="4" style="text-align: center;">Sin citas próximas</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($pendientes as $cita): ?>
                                         <tr>
                                             <td><?= date('H:i', strtotime($cita['scheduled_at'])) ?></td>
                                             <td><?= htmlspecialchars($cita['first_name'] . ' ' . $cita['last_name']) ?></td>
                                             <td>
-                                                <span class="status <?= htmlspecialchars($cita['status']) ?>"></span>
+                                                <span class="status pendiente"></span>
                                                 <?= ucfirst($cita['status']) ?>
                                             </td>
                                             <td>
@@ -114,6 +115,7 @@ $citasFiltradas = array_filter($citas, function($cita) {
                                 <?php endif; ?>
                             </tbody>
 
+
                         </table>
                     </div>
                 </div>
@@ -122,181 +124,335 @@ $citasFiltradas = array_filter($citas, function($cita) {
     </main>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const viewButtons = document.querySelectorAll('.view-btn');
-        const views = {
-            'Día': document.getElementById('day-view'),
-            'Semana': document.getElementById('week-view'),
-            'Mes': document.getElementById('month-view')
-        };
+        document.addEventListener('DOMContentLoaded', function () {
+            const viewButtons = document.querySelectorAll('.view-btn');
+            const views = {
+                'Día': document.getElementById('day-view'),
+                'Semana': document.getElementById('week-view'),
+                'Mes': document.getElementById('month-view')
+            };
 
-        const dateHeader = document.getElementById('calendar-current-title');
-        let currentDate = new Date();
-        let currentView = 'Día';
+            const dateHeader = document.getElementById('calendar-current-title');
+            let currentDate = new Date();
+            let currentView = 'Día';
 
-        function getISODate(date) {
-            return date.toISOString().split('T')[0];
-        }
+            function getISODate(date) {
+                return date.toISOString().split('T')[0];
+            }
 
-function updateHeader() {
-    const options = { month: 'long', year: 'numeric' };
-    const dayOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+            function updateHeader() {
+                const options = { month: 'long', year: 'numeric' };
+                const dayOptions = { day: 'numeric', month: 'long', year: 'numeric' };
 
-    const weekView = document.getElementById('week-view');
-    const weekGrid = weekView.querySelector('.week-grid');
-    if (weekGrid) weekGrid.innerHTML = '';
+                const weekGrid = document.querySelector('#week-view .week-grid');
+                if (weekGrid) weekGrid.innerHTML = '';
 
-if (currentView === 'Día') {
-    dateHeader.textContent = currentDate.toLocaleDateString('es-MX', dayOptions);
+                const monthGrid = document.querySelector('#month-view .month-grid');
+                if (monthGrid) monthGrid.innerHTML = '';
 
-    const todayStr = getISODate(currentDate);
-    const dayAppointments = document.querySelectorAll('#day-view .appointment-item');
+                if (currentView === 'Día') {
+                    dateHeader.textContent = currentDate.toLocaleDateString('es-MX', dayOptions);
 
-    dayAppointments.forEach(el => {
-        const date = el.dataset.date;
-        if (date === todayStr) {
-            el.style.display = 'block';
-            el.style.top = el.dataset.top + 'px';
-            el.style.height = '45px';
-            el.style.position = 'absolute';
-        } else {
-            el.style.display = 'none';
-        }
+                    const todayStr = getISODate(currentDate);
+                    const dayAppointments = document.querySelectorAll('#day-view .appointment-item');
 
-    });
-}else if (currentView === 'Semana') {
-        const startOfWeek = new Date(currentDate);
-        const endOfWeek = new Date(currentDate);
-        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    dayAppointments.forEach(el => {
+                        const date = el.dataset.date;
+                        if (date === todayStr) {
+                            el.style.display = 'block';
+                            el.style.top = el.dataset.top + 'px';
+                            el.style.height = '45px';
+                            el.style.position = 'absolute';
+                        } else {
+                            el.style.display = 'none';
+                        }
+                    });
 
-        const format = d => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-        dateHeader.textContent = `${format(startOfWeek)} - ${format(endOfWeek)}`;
+                } else if (currentView === 'Semana') {
+                    const startOfWeek = new Date(currentDate);
+                    const endOfWeek = new Date(currentDate);
+                    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-        const weekDates = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(startOfWeek);
-            d.setDate(startOfWeek.getDate() + i);
-            const dateStr = getISODate(d);
-            weekDates.push(dateStr);
+                    const format = d => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+                    dateHeader.textContent = `${format(startOfWeek)} - ${format(endOfWeek)}`;
 
-            const dayColumn = document.createElement('div');
-            dayColumn.className = 'week-day-column';
+                    for (let i = 0; i < 7; i++) {
+                        const d = new Date(startOfWeek);
+                        d.setDate(startOfWeek.getDate() + i);
+                        const dateStr = getISODate(d);
 
-            const label = document.createElement('div');
-            label.className = 'week-day-label';
-            label.textContent = d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
-            dayColumn.appendChild(label);
+                        const dayColumn = document.createElement('div');
+                        dayColumn.className = 'week-day-column';
 
-            document.querySelectorAll('.appointment-item').forEach(el => {
-                if (el.dataset.date === dateStr) {
-                    const hora = el.querySelector('.appointment-time')?.textContent || '';
-                    const nombre = el.querySelector('.appointment-title')?.textContent || '';
+                        const label = document.createElement('div');
+                        label.className = 'week-day-label';
+                        label.textContent = d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
+                        dayColumn.appendChild(label);
 
-                    const item = document.createElement('div');
-                    item.className = 'week-appointment';
-                    item.innerHTML = `<div>${hora}</div><div>${nombre}</div>`;
-                    dayColumn.appendChild(item);
+                        document.querySelectorAll('.appointment-item').forEach(el => {
+                            if (el.dataset.date === dateStr) {
+                                const hora = el.querySelector('.appointment-time')?.textContent || '';
+                                const nombre = el.querySelector('.appointment-title')?.textContent || '';
+
+                                const item = document.createElement('div');
+                                item.className = 'week-appointment ' + (el.classList.contains('pendiente') ? 'pendiente' : el.classList.contains('completada') ? 'completada' : 'cancelada');
+                                item.innerHTML = `<div>${hora}</div><div>${nombre}</div>`;
+                                dayColumn.appendChild(item);
+                            }
+                        });
+
+                        if (weekGrid) weekGrid.appendChild(dayColumn);
+                    }
+
+                } else if (currentView === 'Mes') {
+                    dateHeader.textContent = currentDate.toLocaleDateString('es-MX', options);
+
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth();
+
+                    const firstDay = new Date(year, month, 1);
+                    const lastDay = new Date(year, month + 1, 0);
+                    const startDay = firstDay.getDay(); // 0 = domingo, 1 = lunes...
+                    const totalDays = lastDay.getDate();
+
+                    const todayStr = getISODate(new Date());
+
+                    let dayCounter = 1;
+                    for (let i = 0; i < 6; i++) {
+                        for (let j = 0; j < 7; j++) {
+                            const cell = document.createElement('div');
+                            cell.className = 'month-day-cell';
+
+                            if (i === 0 && j < ((startDay + 6) % 7)) {
+                                cell.innerHTML = '';
+                            } else if (dayCounter <= totalDays) {
+                                const dateObj = new Date(year, month, dayCounter);
+                                const dateStr = getISODate(dateObj);
+                                const dayHeader = document.createElement('div');
+                                dayHeader.className = 'day-number';
+                                dayHeader.textContent = dayCounter;
+
+                                if (dateStr === todayStr) {
+                                    cell.classList.add('today');
+                                }
+
+                                cell.appendChild(dayHeader);
+
+                                document.querySelectorAll('.appointment-item').forEach(el => {
+                                    if (el.dataset.date === dateStr) {
+                                        const hora = el.querySelector('.appointment-time')?.textContent || '';
+                                        const nombre = el.querySelector('.appointment-title')?.textContent || '';
+
+                                        const cita = document.createElement('div');
+                                        cita.className = 'month-appointment ' + (el.classList.contains('pendiente') ? 'pendiente' : el.classList.contains('completada') ? 'completada' : 'cancelada');
+                                        cita.innerHTML = `<div>${hora}</div><div>${nombre}</div>`;
+                                        cell.appendChild(cita);
+                                    }
+                                });
+
+                                dayCounter++;
+                            }
+
+                            if (monthGrid) monthGrid.appendChild(cell);
+                        }
+                    }
                 }
-            });
-
-            if (weekGrid) weekGrid.appendChild(dayColumn);
-        }
-    } else {
-        dateHeader.textContent = currentDate.toLocaleDateString('es-MX', options);
-    }
-}
+            }
 
 
-        function changeMonth(offset) {
-            currentDate.setMonth(currentDate.getMonth() + offset);
-            updateHeader();
-        }
 
-        function changeDay(offset) {
-            currentDate.setDate(currentDate.getDate() + offset);
-            updateHeader();
-        }
-
-        function changeWeek(offset) {
-            currentDate.setDate(currentDate.getDate() + (offset * 7));
-            updateHeader();
-        }
-
-        viewButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                viewButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                currentView = this.textContent;
-
-                for (const key in views) {
-                    views[key].style.display = (this.textContent === key) ? 'block' : 'none';
-                }
+            function changeMonth(offset) {
+                currentDate.setMonth(currentDate.getMonth() + offset);
                 updateHeader();
+            }
+
+            function changeDay(offset) {
+                currentDate.setDate(currentDate.getDate() + offset);
+                updateHeader();
+            }
+
+            function changeWeek(offset) {
+                currentDate.setDate(currentDate.getDate() + (offset * 7));
+                updateHeader();
+            }
+
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    viewButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentView = this.textContent;
+
+                    for (const key in views) {
+                        views[key].style.display = (this.textContent === key) ? 'block' : 'none';
+                    }
+                    updateHeader();
+                });
             });
+
+            const prevButton = document.querySelector('.nav-btn:first-child');
+            const nextButton = document.querySelector('.nav-btn:last-child');
+
+            prevButton.addEventListener('click', () => {
+                if (currentView === 'Día') changeDay(-1);
+                else if (currentView === 'Semana') changeWeek(-1);
+                else changeMonth(-1);
+            });
+
+            nextButton.addEventListener('click', () => {
+                if (currentView === 'Día') changeDay(1);
+                else if (currentView === 'Semana') changeWeek(1);
+                else changeMonth(1);
+            });
+
+            updateHeader();
         });
 
-        const prevButton = document.querySelector('.nav-btn:first-child');
-        const nextButton = document.querySelector('.nav-btn:last-child');
+    function renderMonthView() {
+    const monthView = document.querySelector('.month-grid');
+    monthView.innerHTML = '';
 
-        prevButton.addEventListener('click', () => {
-            if (currentView === 'Día') changeDay(-1);
-            else if (currentView === 'Semana') changeWeek(-1);
-            else changeMonth(-1);
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+
+    const todayMonth = month + 1;
+    dateHeader.textContent = currentDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < startDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'month-day-cell';
+        fragment.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const cell = document.createElement('div');
+        cell.className = 'month-day-cell';
+
+        const label = document.createElement('div');
+        label.className = 'month-day-number';
+        label.textContent = day;
+        cell.appendChild(label);
+
+        document.querySelectorAll('.appointment-item').forEach(el => {
+            if (el.dataset.date === dateStr) {
+                const hora = el.querySelector('.appointment-time')?.textContent || '';
+                const nombre = el.querySelector('.appointment-title')?.textContent || '';
+
+                const cita = document.createElement('div');
+                cita.className = 'month-appointment';
+                cita.textContent = `${hora} - ${nombre}`;
+                cell.appendChild(cita);
+            }
         });
 
-        nextButton.addEventListener('click', () => {
-            if (currentView === 'Día') changeDay(1);
-            else if (currentView === 'Semana') changeWeek(1);
-            else changeMonth(1);
-        });
+        fragment.appendChild(cell);
+    }
 
-        updateHeader();
-    });
-</script>
+    monthView.appendChild(fragment);
+}
+    </script>
 </body>
 
 </html>
 
 <style>
-    /*Semamna */
-    .week-grid {
+        /*Semamna */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .week-day-column {
+            background-color: #f9f9f9;
+            padding: 5px;
+            border: 1px solid #ccc;
+            min-height: 150px;
+            border-radius: 8px;
+        }
+        .week-day-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+        }
+        .week-appointment {
+        background-color: #e8f0fe;
+        padding: 4px 6px;
+        margin: 4px 0;
+        border-left: 3px solid #4285f4;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    .appointments-column {
+        position: relative;
+        height: 660px;
+    }
+    .appointment-item {
+        position: absolute;
+        width: 100%;
+    }
+
+        /*Mensual */
+    .month-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        margin-top: 10px;
+        grid-auto-rows: 100px;
+        gap: 5px;
+        margin-top: 15px;
     }
-    .week-day-column {
-        background-color: #f9f9f9;
-        padding: 5px;
-        border: 1px solid #ccc;
-        min-height: 150px;
-        border-radius: 8px;
+    .month-day-cell {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 4px;
+        position: relative;
     }
-    .week-day-label {
+    .month-day-number {
         font-weight: bold;
-        margin-bottom: 5px;
-        text-align: center;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 4px;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        color: #333;
     }
-    .week-appointment {
-    background-color: #e8f0fe;
-    padding: 4px 6px;
-    margin: 4px 0;
-    border-left: 3px solid #4285f4;
-    border-radius: 4px;
-    font-size: 0.85rem;
-}
-.appointments-column {
-    position: relative;
-    height: 660px;
-}
-.appointment-item {
-    position: absolute;
-    width: 100%;
-}
+    .month-appointment {
+        background-color: #f0f4ff;
+        font-size: 0.75rem;
+        border-left: 3px solid #4a90e2;
+        padding: 2px 4px;
+        margin-top: 2px;
+        border-radius: 4px;
+    }
 
+    /* Colores por estado */
+    .appointment-item.pendiente,
+    .week-appointment.pendiente,
+    .month-appointment.pendiente {
+        background-color: #e8f0fe;
+        border-left: 3px solid #4285f4;
+    }
 
+    .appointment-item.completada,
+    .week-appointment.completada,
+    .month-appointment.completada {
+        background-color: #e6f4ea;
+        border-left: 3px solid #34a853;
+    }
+
+    .appointment-item.cancelada,
+    .week-appointment.cancelada,
+    .month-appointment.cancelada {
+        background-color: #fce8e6;
+        border-left: 3px solid #ea4335;
+    }
 
 </style>
+
