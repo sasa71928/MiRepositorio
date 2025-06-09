@@ -4,30 +4,56 @@ require_once __DIR__ . '/../config/database.php';
 function crearCita($data) {
     global $pdo;
 
-    $userId = $_SESSION['user']['id'];
-    $doctorId = (int)$data['doctor'];
+    $userId = $data['user_id'];
+    $doctorId = $data['doctor_id'];
     $fecha = $data['date'];
     $hora = $data['time'];
-    $mensaje = $data['message'] ?? null; // si deseas usarlo más adelante
+    $reason = trim($data['reason']);
+    $amount = floatval($data['amount']);
+    $paymentMethod = $data['method'];
 
-    // Combina fecha y hora en DATETIME
-    $scheduledAt = date('Y-m-d H:i:s', strtotime("$fecha $hora"));
+    $scheduledAt = "$fecha $hora";
 
-        $reason = $data['message'] ?? null;
+    // Validaciones
+    if (empty($reason)) {
+        return ['error' => 'El motivo de la cita es obligatorio.'];
+    }
 
-        $stmt = $pdo->prepare("
-            INSERT INTO appointments (user_id, doctor_id, scheduled_at, reason)
-            VALUES (:user_id, :doctor_id, :scheduled_at, :reason)
-        ");
+    $horaInt = (int) date('H', strtotime($scheduledAt));
+    if ($horaInt < 8 || $horaInt >= 18) {
+        return ['error' => 'La hora debe estar entre las 08:00 y las 18:00.'];
+    }
 
-        $stmt->execute([
-            ':user_id' => $userId,
-            ':doctor_id' => $doctorId,
-            ':scheduled_at' => $scheduledAt,
-            ':reason' => $reason
-    ]);
+    if ($amount < 100) {
+        return ['error' => 'El monto debe ser mínimo de $100.00'];
+    }
 
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM appointments WHERE user_id = ? AND status = 'pendiente'");
+    $stmt->execute([$userId]);
+    $pendientes = $stmt->fetchColumn();
+
+    if ($pendientes >= 3) {
+        return ['error' => 'Ya tienes 3 o más citas pendientes. Cancela alguna antes de continuar.'];
+    }
+
+    // Crear cita
+    $stmt = $pdo->prepare("INSERT INTO appointments (user_id, doctor_id, scheduled_at, reason) VALUES (?, ?, ?, ?)");
+    $result = $stmt->execute([$userId, $doctorId, $scheduledAt, $reason]);
+
+    if (! $result) {
+        return ['error' => 'No se pudo registrar la cita. Intenta más tarde.'];
+    }
+
+    $appointmentId = $pdo->lastInsertId();
+
+    // Registrar pago
+    $stmt = $pdo->prepare("INSERT INTO payments (appointment_id, amount, method, status) VALUES (?, ?, ?, 'completado')");
+    $stmt->execute([$appointmentId, $amount, $paymentMethod]);
+
+    return ['success' => true];
 }
+
+
 
 function obtenerDepartamentos() {
     global $pdo;

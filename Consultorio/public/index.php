@@ -212,14 +212,24 @@ switch ($request) {
             }
 
             require_once __DIR__ . '/../src/controllers/AppointmentController.php';
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    crearCita($_POST);
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $data = $_POST;
+                $data['user_id'] = $_SESSION['user']['id'];
+                $resultado = crearCita($data);
+
+                if (isset($resultado['success'])) {
                     header('Location: ' . BASE_URL . '/appointments/create?success=1');
-                    exit;
-                }else {
+                } else {
+                    $msg = urlencode($resultado['error']);
+                    header('Location: ' . BASE_URL . '/appointments/create?error=1&msg=' . $msg);
+                }
+                exit;
+            } else {
                 include __DIR__ . '/../src/views/appointments/crearCita.php';
             }
         break;
+
         case '/appointments/mine':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
