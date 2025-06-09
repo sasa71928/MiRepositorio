@@ -380,20 +380,55 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/doctors/listaPacientes.php';
         break;
-case '/departamento':
-    require_once __DIR__ . '/../src/helpers/auth.php';
-    require_login();
+        case '/departamento':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
-    if (!is_admin()) {
-        header('Location: ' . BASE_URL);
-        exit;
-    }
+            if (!is_admin()) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
 
-    require_once __DIR__ . '/../src/controllers/AdminController.php';
-    $departamentos = obtenerDepartamentos(); // <- aquí cargas los datos
+            require_once __DIR__ . '/../src/controllers/AdminController.php';
+            $departamentos = obtenerDepartamentos(); // <- aquí cargas los datos
 
-    include __DIR__ . '/../src/views/admin/departamentos.php'; // <- solo se carga la vista
-    break;
+            include __DIR__ . '/../src/views/admin/departamentos.php'; // <- solo se carga la vista
+            break;
+            case '/departamento/crear':
+                require_once __DIR__ . '/../src/helpers/auth.php';
+                require_login();
+
+                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                    require_once __DIR__ . '/../src/controllers/AdminController.php';
+                    crearDepartamento($_POST['nombre']);
+                }
+
+                header('Location: ' . BASE_URL . '/departamento');
+                exit;
+
+            case '/departamento/editar':
+                require_once __DIR__ . '/../src/helpers/auth.php';
+                require_login();
+
+                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                    require_once __DIR__ . '/../src/controllers/AdminController.php';
+                    editarDepartamento($_POST['id'], $_POST['nombre']);
+                }
+
+                header('Location: ' . BASE_URL . '/departamento');
+                exit;
+
+            case '/departamento/eliminar':
+                require_once __DIR__ . '/../src/helpers/auth.php';
+                require_login();
+
+                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                    require_once __DIR__ . '/../src/controllers/AdminController.php';
+                    eliminarDepartamento($_POST['id']);
+                }
+
+                header('Location: ' . BASE_URL . '/departamento');
+                exit;
 
 
 

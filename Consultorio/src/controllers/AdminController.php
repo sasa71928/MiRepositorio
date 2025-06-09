@@ -230,3 +230,49 @@ function editarDoctor() {
 
     echo json_encode(['status' => 'ok']);
 }
+
+function crearDepartamento($nombre) {
+    global $pdo;
+    $stmt = $pdo->prepare("INSERT INTO departments (name) VALUES (:nombre)");
+    return $stmt->execute([':nombre' => $nombre]);
+}
+
+function editarDepartamento($id, $nombre) {
+    global $pdo;
+    $stmt = $pdo->prepare("UPDATE departments SET name = :nombre WHERE id = :id");
+    return $stmt->execute([':nombre' => $nombre, ':id' => $id]);
+}
+
+function eliminarDepartamento($id) {
+    global $pdo;
+
+    // Validar si hay doctores en el departamento
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM doctors WHERE department_id = ?");
+    $stmt->execute([$id]);
+    $total = $stmt->fetchColumn();
+
+    if ($total > 0) {
+        // Redirigir con error
+        header("Location: " . BASE_URL . "/departamento?error=ocupado");
+        exit;
+    }
+
+    $stmt = $pdo->prepare("DELETE FROM departments WHERE id = ?");
+    $stmt->execute([$id]);
+    header("Location: " . BASE_URL . "/departamento?success=1");
+    exit;
+}
+
+function obtenerDepartamentosConDoctores() {
+    global $pdo;
+
+    $sql = "
+        SELECT d.id, d.name, COUNT(doc.id) AS total_doctores
+        FROM departments d
+        LEFT JOIN doctors doc ON doc.department_id = d.id
+        GROUP BY d.id
+    ";
+
+    $stmt = $pdo->query($sql);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

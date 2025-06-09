@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../../controllers/AdminController.php';
 
-$departamentos = obtenerDepartamentos();
+$departamentos = obtenerDepartamentosConDoctores();
+
 ?>
 <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/admin.css" />
 <main class="main">
@@ -23,8 +24,9 @@ $departamentos = obtenerDepartamentos();
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Nombre</th>
+                            <th>Doctores</th>
                             <th>Acciones</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -32,9 +34,10 @@ $departamentos = obtenerDepartamentos();
                             <tr>
                                 <td><?= $dep['id'] ?></td>
                                 <td><?= htmlspecialchars($dep['name']) ?></td>
+                                <td><?= $dep['total_doctores'] ?? 0 ?> doctores</td>
                                 <td>
                                     <button class="btn btn-edit" onclick="abrirModalEditar(<?= $dep['id'] ?>, '<?= htmlspecialchars($dep['name']) ?>')">Editar</button>
-                                    <form action="<?= BASE_URL ?>/adminDepartments/eliminar" method="POST" style="display:inline-block;">
+                                    <form action="<?= BASE_URL ?>/departamento/eliminar" method="POST" style="display:inline-block;">
                                         <input type="hidden" name="id" value="<?= $dep['id'] ?>">
                                         <button type="submit" class="btn btn-danger" onclick="return confirm('¿Eliminar este departamento?')">Eliminar</button>
                                     </form>
@@ -42,6 +45,8 @@ $departamentos = obtenerDepartamentos();
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
+
+
                 </table>
             </section>
         </div>
@@ -56,7 +61,7 @@ $departamentos = obtenerDepartamentos();
             <button class="close-modal" onclick="cerrarModal('modalAgregar')">&times;</button>
         </div>
         <div class="modal-body">
-            <form action="<?= BASE_URL ?>/adminDepartments/crear" method="POST">
+            <form action="<?= BASE_URL ?>/departamento/crear" method="POST">
                 <div class="form-group">
                     <label for="nuevo_departamento">Nombre del Departamento</label>
                     <input type="text" name="nombre" id="nuevo_departamento" required>
@@ -78,7 +83,7 @@ $departamentos = obtenerDepartamentos();
             <button class="close-modal" onclick="cerrarModal('modalEditar')">&times;</button>
         </div>
         <div class="modal-body">
-            <form action="<?= BASE_URL ?>/adminDepartments/editar" method="POST">
+            <form action="<?= BASE_URL ?>/departamento/editar" method="POST">
                 <input type="hidden" name="id" id="editar_id">
                 <div class="form-group">
                     <label for="editar_nombre">Nombre del Departamento</label>
