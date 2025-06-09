@@ -70,6 +70,7 @@
                                 data-medicamentos="<?= $paciente['current_medications'] ?? '-' ?>"
                                 data-historial="<?= $paciente['historial'] ?? '-' ?>"
                                 data-updated="<?= $paciente['updated_at'] ?? '-' ?>"
+                                data-citas='<?= json_encode($paciente['citas'] ?? []) ?>'
                                 title="Ver historial médico">
                                 <i class="fas fa-eye"></i>
                                 </a>
@@ -109,6 +110,7 @@
             <div class="profile-tabs">
             <button class="tab-btn active" data-target="tab-info">Información</button>
             <button class="tab-btn" data-target="tab-historial">Historial Médico</button>
+            <button class="tab-btn" data-target="tab-citas">Citas</button>
             </div>
 
             <div class="profile-content">
@@ -122,6 +124,10 @@
                 <div id="contenidoHistorialPaciente">Cargando historial médico...</div>
             </div>
             </div>
+            <div class="tab-content" id="tab-citas">
+                <div id="contenidoCitasPaciente">Cargando historial de citas...</div>
+            </div>
+
         </div>
     </div>
 </section>
@@ -157,7 +163,9 @@
         chronic_diseases: btn.dataset.enfermedades,
         current_medications: btn.dataset.medicamentos,
         historial: btn.dataset.historial || '-',
-        updated_at: btn.dataset.updated
+        updated_at: btn.dataset.updated,
+        citas: JSON.parse(btn.dataset.citas || '[]')
+
         };
 
 
@@ -245,6 +253,36 @@
             </div>
         </div>
         `;
+        let citasHTML = '';
+        if (p.citas.length > 0) {
+        citasHTML = `
+            <div class="info-section">
+            <h4>Historial de Citas</h4>
+            <table class="patients-table">
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                ${p.citas.map(cita => `
+                    <tr>
+                    <td>${cita.scheduled_at}</td>
+                    <td>${cita.reason}</td>
+                    <td>${cita.status}</td>
+                    </tr>
+                `).join('')}
+                </tbody>
+            </table>
+            </div>
+        `;
+        } else {
+        citasHTML = '<p>No hay citas registradas.</p>';
+        }
+
+document.getElementById('contenidoCitasPaciente').innerHTML = citasHTML;
 
     });
     });

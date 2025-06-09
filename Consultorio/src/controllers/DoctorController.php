@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
+foreach ($pacientes as &$paciente) {
+    $paciente['citas'] = obtenerCitasPorUsuario($paciente['id']);
+}
+
+
 function obtenerCitasDelDoctor($doctorId) {
     global $pdo;
 
@@ -46,4 +51,32 @@ function cancelarCitaDoctor($citaId, $doctorId) {
         ':id' => $citaId,
         ':doctor' => $doctorId
     ]);
+}
+
+function obtenerCitasPorUsuario($userId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            scheduled_at, 
+            reason, 
+            status
+        FROM appointments 
+        WHERE user_id = :id 
+        ORDER BY scheduled_at DESC
+    ");
+    $stmt->execute([':id' => $userId]);
+
+    $citasRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $citas = [];
+
+    foreach ($citasRaw as $cita) {
+        $citas[] = [
+            'fecha' => $cita['scheduled_at'],
+            'motivo' => $cita['reason'],
+            'estado' => $cita['status'],
+        ];
+    }
+
+    return $citas;
 }

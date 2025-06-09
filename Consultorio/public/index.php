@@ -373,8 +373,14 @@ switch ($request) {
             $doctorId = $_SESSION['user']['id'];
             $pacientes = obtenerPacientesDelDoctor($doctorId);
 
+            // Aquí agregas las citas a cada paciente
+            foreach ($pacientes as &$paciente) {
+                $paciente['citas'] = obtenerCitasPorUsuario($paciente['id']);
+            }
+
             include __DIR__ . '/../src/views/doctors/listaPacientes.php';
-            break;
+        break;
+
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
