@@ -350,7 +350,21 @@ switch ($request) {
             header('Location: ' . BASE_URL . '/doctor-home');
             exit;
             break;
+        case '/appointments/complete':
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
 
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $resultado = completarConsulta($_POST);
+
+                if (isset($resultado['success'])) {
+                    header('Location: ' . BASE_URL . '/doctor-home');
+                } else {
+                    $msg = urlencode($resultado['error']);
+                    header('Location: ' . BASE_URL . '/appointments/complete-error?msg=' . $msg);
+                }
+                exit;
+            }
+            break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

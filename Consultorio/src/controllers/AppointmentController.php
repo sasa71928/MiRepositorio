@@ -112,3 +112,32 @@ function cancelarCita($id, $userId) {
 
     return false;
 }
+
+function completarConsulta($data) {
+    global $pdo;
+
+    $appointmentId = $data['appointment_id'];
+    $padecimiento = trim($data['padecimiento']);
+    $medicamento = trim($data['medicamento']);
+    $instrucciones = trim($data['instrucciones']);
+    $observaciones = trim($data['observaciones'] ?? '');
+
+    // Validación básica
+    if (empty($padecimiento) || empty($medicamento) || empty($instrucciones)) {
+        return ['error' => 'Todos los campos obligatorios deben ser completados.'];
+    }
+
+    // 1. Guardar el registro médico
+    $stmt = $pdo->prepare("INSERT INTO medical_records (user_id, appointment_id, notes) VALUES (
+        (SELECT user_id FROM appointments WHERE id = ?),
+        ?, 
+        ?
+    )");
+    $stmt->execute([$appointmentId, $appointmentId, "Padecimiento: $padecimiento\nMedicamento: $medicamento\nInstrucciones: $instrucciones\nObservaciones: $observaciones"]);
+
+    // 2. Cambiar estado de la cita
+    $stmt = $pdo->prepare("UPDATE appointments SET status = 'completada' WHERE id = ?");
+    $stmt->execute([$appointmentId]);
+
+    return ['success' => true];
+}

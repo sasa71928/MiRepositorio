@@ -64,11 +64,12 @@ $estado = htmlspecialchars($cita['status']);
                     </div>
 
                     <!-- Formulario de consulta -->
-                    <form id="consulta-form" class="consulta-form">
+                    <form id="consulta-form" class="consulta-form" method="post" action="<?= BASE_URL ?>/appointments/complete">
                         <div class="consulta-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-stethoscope"></i> Registro de Consulta</h3>
                             </div>
+                            <input type="hidden" name="appointment_id" value="<?= htmlspecialchars($cita['id']) ?>">
                             <div class="card-body">
                                 <div class="form-group">
                                     <label for="padecimiento">Padecimiento / Enfermedad <span class="required">*</span></label>
@@ -108,20 +109,8 @@ $estado = htmlspecialchars($cita['status']);
         const btnGuardar = document.getElementById('btn-guardar');
         const btnImprimir = document.getElementById('btn-imprimir');
         
-        // Manejar el envío del formulario
-        consultaForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Aquí se implementaría la lógica para guardar la consulta
-            // y marcar la cita como completada
-            
-            // Simulación de envío exitoso
-            alert('Consulta completada con éxito. La cita ha sido marcada como completada.');
-            
-            // Redireccionar al dashboard
-            window.location.href = 'inicioDoctor.php';
-        });
-        
         // Manejar el guardado de borrador
         btnGuardar.addEventListener('click', function() {
             // Aquí se implementaría la lógica para guardar un borrador
