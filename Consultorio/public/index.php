@@ -429,9 +429,20 @@ switch ($request) {
 
                 header('Location: ' . BASE_URL . '/departamento');
                 exit;
+            case '/reportesAdmin':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
+            if (!is_admin()) {
+                header('Location: ' . BASE_URL);
+                exit;
+            }
 
+            require_once __DIR__ . '/../src/controllers/ReporteController.php';
+            $reporte = generarReporteGeneral(); // función que retorna datos agregados
 
+            include __DIR__ . '/../src/views/admin/reportes.php';
+            break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
