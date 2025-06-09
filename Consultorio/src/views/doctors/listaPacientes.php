@@ -24,7 +24,7 @@
                 <div class="filters-container">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar paciente...">
+                        <input type="text" id="busquedaPaciente" placeholder="Buscar paciente...">
                     </div>
                 </div>
 
@@ -73,26 +73,12 @@
                                 title="Ver historial médico">
                                 <i class="fas fa-eye"></i>
                                 </a>
-
-
                             </tr>
                         </td>
 
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-
-
-                <!-- Paginación -->
-                <div class="pagination">
-                    <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <span class="page-ellipsis">...</span>
-                    <button class="page-btn">10</button>
-                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
-                </div>
             </div>
         </section>
 
@@ -289,6 +275,21 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (selectedTab) selectedTab.classList.add('active');
   });
 });
+
+// Buscador en tiempo real
+const inputBusqueda = document.getElementById('busquedaPaciente');
+inputBusqueda.addEventListener('input', () => {
+  const filtro = inputBusqueda.value.toLowerCase();
+  const filas = document.querySelectorAll('.patients-table tbody tr');
+
+  filas.forEach(fila => {
+    const nombre = fila.cells[1]?.textContent.toLowerCase();
+    const telefono = fila.cells[4]?.textContent.toLowerCase();
+    const coincide = nombre.includes(filtro) || telefono.includes(filtro);
+    fila.style.display = coincide ? '' : 'none';
+  });
+});
+
 
 
 </script>
