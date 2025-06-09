@@ -365,7 +365,7 @@ switch ($request) {
                 exit;
             }
             break;
-        case '/listaPacientes.php':
+        case '/listaPacientes':
             require_once __DIR__ . '/../src/controllers/AppointmentController.php';
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();

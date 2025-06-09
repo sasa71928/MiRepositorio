@@ -64,7 +64,7 @@
                             <p>Agregar, editar o eliminar doctores del sistema</p>
                         </a>
                         
-                        <a href="reportesAdmin.php" class="quick-access-card">
+                         <a href="<?= BASE_URL ?>/reportesAdmin" class="quick-access-card">
                             <div class="quick-access-icon">
                                 <i class="fas fa-chart-line"></i>
                             </div>
