@@ -1,10 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
-foreach ($pacientes as &$paciente) {
-    $paciente['citas'] = obtenerCitasPorUsuario($paciente['id']);
-}
-
 
 function obtenerCitasDelDoctor($doctorId) {
     global $pdo;

@@ -39,7 +39,6 @@ $inicio = BASE_URL . (
 
                 <?php elseif (is_doctor()): ?>
                     <li><a href="<?= BASE_URL ?>/doctor-home">Inicio</a></li>
-                    <li><a href="<?= BASE_URL ?>/reportes.php">Reportes</a></li>
                     <li><a href="<?= BASE_URL ?>/listaPacientes.php">Pacientes</a></li>
 
                 <?php else: ?>
