@@ -365,6 +365,16 @@ switch ($request) {
                 exit;
             }
             break;
+        case '/listaPacientes.php':
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
+
+            $doctorId = $_SESSION['user']['id'];
+            $pacientes = obtenerPacientesDelDoctor($doctorId);
+
+            include __DIR__ . '/../src/views/doctors/listaPacientes.php';
+            break;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';

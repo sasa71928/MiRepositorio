@@ -141,3 +141,49 @@ function completarConsulta($data) {
 
     return ['success' => true];
 }
+
+function obtenerPacientesDelDoctor($doctorId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT 
+            u.id, u.first_name, u.last_name, u.phone, u.birthdate, u.gender,
+            u.email, u.address,
+            mi.blood_type, mi.allergies, mi.chronic_diseases, mi.current_medications,
+            mi.updated_at
+        FROM appointments a
+        JOIN users u ON a.user_id = u.id
+        LEFT JOIN medical_info mi ON u.id = mi.user_id
+        WHERE a.doctor_id = ?
+        ORDER BY u.last_name
+    ");
+    $stmt->execute([$doctorId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+function obtenerDatosPaciente($id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+function obtenerHistorialMedico($id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM medical_records WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obtenerHistorialMedicoPorUsuario($userId) {
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT notes, created_at 
+        FROM medical_records 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC
+    ");
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
