@@ -276,3 +276,62 @@ function obtenerDepartamentosConDoctores() {
     $stmt = $pdo->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+function contarTotalConsultas() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT COUNT(*) FROM appointments WHERE status = 'completada'");
+    return $stmt->fetchColumn();
+}
+
+function contarNuevosPacientes() {
+    global $pdo;
+    // Consideramos "nuevos" los de los últimos 30 días
+    $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    return $stmt->fetchColumn();
+}
+
+function calcularIngresosTotales() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT SUM(amount) FROM payments WHERE status = 'completado'");
+    return $stmt->fetchColumn() ?: 0;
+}
+
+function obtenerDoctoresMasActivos() {
+    global $pdo;
+    $stmt = $pdo->query("
+        SELECT 
+            CONCAT(u.first_name, ' ', u.last_name) AS nombre,
+            d.name AS departamento,
+            COUNT(a.id) AS consultas,
+            AVG(r.score) AS valoracion
+        FROM appointments a
+        JOIN users u ON a.doctor_id = u.id
+        JOIN doctors doc ON doc.user_id = u.id
+        LEFT JOIN departments d ON doc.department_id = d.id
+        LEFT JOIN ratings r ON r.doctor_id = u.id
+        WHERE a.status = 'completada'
+        GROUP BY u.id
+        ORDER BY consultas DESC
+        LIMIT 5
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obtenerServiciosMasSolicitados() {
+    global $pdo;
+    $stmt = $pdo->query("
+        SELECT 
+            s.name AS nombre,
+            d.name AS departamento,
+            COUNT(asv.appointment_id) AS cantidad,
+            SUM(p.amount) AS ingresos
+        FROM appointment_services asv
+        JOIN services s ON s.id = asv.service_id
+        JOIN departments d ON s.department_id = d.id
+        JOIN payments p ON p.appointment_id = asv.appointment_id AND p.status = 'completado'
+        GROUP BY s.id
+        ORDER BY cantidad DESC
+        LIMIT 5
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}

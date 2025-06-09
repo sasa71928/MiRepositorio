@@ -443,6 +443,16 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/admin/reportes.php';
             break;
+        case '/reporte/enviar':
+            require_once __DIR__ . '/../src/controllers/ReportePDFController.php';
+            $correo = $_SESSION['user']['email'] ?? 'osalazarsalas@gmail.com';
+
+            if (enviarReporteResumen($correo)) {
+                header('Location: ' . BASE_URL . '/');
+            } else {
+                header('Location: ' . BASE_URL . '/');
+            }
+        exit;
     default:
         // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
