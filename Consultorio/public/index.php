@@ -380,6 +380,22 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/doctors/listaPacientes.php';
         break;
+case '/departamento':
+    require_once __DIR__ . '/../src/helpers/auth.php';
+    require_login();
+
+    if (!is_admin()) {
+        header('Location: ' . BASE_URL);
+        exit;
+    }
+
+    require_once __DIR__ . '/../src/controllers/AdminController.php';
+    $departamentos = obtenerDepartamentos(); // <- aquí cargas los datos
+
+    include __DIR__ . '/../src/views/admin/departamentos.php'; // <- solo se carga la vista
+    break;
+
+
 
     default:
         // Cualquier otra ruta → 404

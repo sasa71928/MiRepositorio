@@ -35,12 +35,12 @@ $inicio = BASE_URL . (
 
                 <?php elseif (is_admin()): ?>
                     <li><a href="<?= BASE_URL ?>/adminDoctors">Médicos</a></li>
-                    <li><a href="<?= BASE_URL ?>/reports">Reportes</a></li>
+                    <li><a href="<?= BASE_URL ?>/departamento">Departamentos</a></li>
+
 
                 <?php elseif (is_doctor()): ?>
                     <li><a href="<?= BASE_URL ?>/doctor-home">Inicio</a></li>
-                    <li><a href="<?= BASE_URL ?>/listaPacientes.php">Pacientes</a></li>
-
+                    <li><a href="<?= BASE_URL ?>/adminDoctors/reportes">Reporte Doctores</a></li>
                 <?php else: ?>
                     <li><a href="<?= BASE_URL ?>/appointments/mine">Mis Citas</a></li>
                     <li><a href="<?= BASE_URL ?>/ratings/valoraciones">Valoraciones</a></li>
@@ -56,7 +56,7 @@ $inicio = BASE_URL . (
             <?php else: ?>
                 <div class="appointment-btn">
                     <?php if (is_admin()): ?>
-                        <a href="<?= BASE_URL ?>/adminDoctors" class="btn btn-primary">Administrar</a>
+                        <a href="<?= BASE_URL ?>/adminDoctors" class="btn btn-primary">Generar Reporte</a>
                     <?php elseif (is_doctor()): ?>
                         <a href="<?= BASE_URL ?>/" class="btn btn-primary">Panel Doctor</a>
                     <?php else: ?>
