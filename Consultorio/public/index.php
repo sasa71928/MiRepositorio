@@ -1,5 +1,6 @@
 <?php
-// public/index.php
+session_start(); // NECESARIO para que $_SESSION funcione
+
 
 // 1) Cargar configuración global
 $config = include __DIR__ . '/../src/config/config.php';
