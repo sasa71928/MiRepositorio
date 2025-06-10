@@ -1,185 +1,178 @@
 <?php
+require_once __DIR__ . '/../../controllers/AppointmentController.php';
 require_once __DIR__ . '/../../controllers/RatingController.php';
-$valoraciones = obtenerValoracionesUsuario($_SESSION['user']['id']);
-$proximas = [];
-$pasadas = [];
-$canceladas = [];
 
+$userId       = $_SESSION['user']['id'];
+$misCitas     = obtenerCitasPorUsuario($userId);
+$valoraciones = obtenerValoracionesUsuario($userId);
+
+$proximas = $pasadas = $canceladas = [];
 foreach ($misCitas as $cita) {
-    $timestamp = strtotime($cita['scheduled_at']);
-
-    if ($cita['status'] === 'cancelada') {
-        $canceladas[] = $cita;
-    } elseif ($cita['status'] === 'completada') {
-        $pasadas[] = $cita;
-    } elseif ($cita['status'] === 'pendiente') {
-        if ($timestamp >= time()) {
-            $proximas[] = $cita;
-        } else {
+    $ts     = strtotime($cita['scheduled_at']);
+    switch ($cita['status']) {
+        case 'cancelada':
+            $canceladas[] = $cita;
+            break;
+        case 'completada':
             $pasadas[] = $cita;
-        }
+            break;
+        default: // pendiente
+            if ($ts < time()) {
+                $pasadas[] = $cita;
+            } else {
+                $proximas[] = $cita;
+            }
+            break;
     }
 }
 ?>
-
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Citas - CliniGest</title>
-    <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <?php include_once __DIR__.'/../layouts/header.php'; ?>
-    <main class="main">
-        <section class="appointments-section">
-            <div class="container">
-                <div class="section-title" data-aos="fade-up">
-                    <h2>Mis Citas</h2>
-                    <p>Gestiona tus citas médicas programadas</p>
-                </div>
-                
-                <div class="appointments-container">
-                    <div class="appointments-header">
-                        <div class="appointments-tabs">
-                            <button class="tab-btn active" data-tab="upcoming">Próximas</button>
-                            <button class="tab-btn" data-tab="past">Pasadas</button>
-                            <button class="tab-btn" data-tab="canceled">Canceladas</button>
-                        </div>
-                        <a href="<?= BASE_URL ?>/appointments/create" class="btn btn-primary">Nueva Cita</a>
-                    </div>
-                    <div class="appointments-content">
-                            <div id="upcoming" class="tab-content active">
-                            <div class="appointments-list">
-                                <?php if (empty($proximas)): ?>
-                                <p style="text-align:center;">No tienes citas próximas.</p>
-                                <?php else: ?>
-                                <?php foreach ($proximas as $cita): ?>
-                                    <div class="appointment-card">
-                                    <div class="appointment-date">
-                                        <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
-                                        <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
-                                        <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
-                                    </div>
-                                    <div class="appointment-details">
-                                        <h3><?= $cita['reason'] ?: 'Consulta médica' ?></h3>
-                                        <div class="appointment-info">
-                                        <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars($cita['doctor_first_name'] . ' ' . $cita['doctor_last_name']) ?></p>
-                                        <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
-                                        <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="appointment-actions">
-                                        <a href="<?= BASE_URL ?>/appointments/cancelar?id=<?= $cita['id'] ?>" class="btn btn-danger">Cancelar</a>
-                                    </div>
-                                    </div>
-                                <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
-                            </div>
-                     
-                            <div id="past" class="tab-content">
-                            <div class="appointments-list">
-                                <?php if (empty($pasadas)): ?>
-                                <p style="text-align:center;">No tienes citas pasadas.</p>
-                                <?php else: ?>
-                                <?php foreach ($pasadas as $cita): ?>
-                                    <div class="appointment-card past">
-                                    <div class="appointment-date">
-                                        <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
-                                        <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
-                                        <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
-                                    </div>
-                                    <div class="appointment-details">
-                                        <h3><?= $cita['reason'] ?: 'Consulta médica' ?></h3>
-                                        <div class="appointment-info">
-                                        <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars($cita['doctor_first_name'] . ' ' . $cita['doctor_last_name']) ?></p>
-                                        <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
-                                        <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
-                                        </div>
-                                        <div class="appointment-status <?= $cita['status'] === 'completada' ? 'completed' : 'vencida' ?>">
-                                        <span><?= $cita['status'] === 'completada' ? 'Valorada' : 'Vencida' ?></span>
-                                        </div>
-                                    </div>
-                                    </div>
-                                        <?php
-                                        $yaValorada = in_array($cita['id'], array_column($valoraciones, 'appointment_id'));
-                                        ?>
-                                        <?php if ($cita['status'] === 'completada' && !$yaValorada): ?>
-                                            <div class="appointment-actions">
-                                                <button class="btn btn-primary">Valorar</button>
-                                            </div>
-                                        <?php endif; ?>
+    <?php include_once __DIR__ . '/../layouts/header.php'; ?>
+    <main class="appointments-section">
+      <div class="container">
+        <div class="section-title" data-aos="fade-up">
+          <h2>Mis Citas</h2>
+          <p>Gestiona tus citas médicas programadas</p>
+        </div>
 
-                                    </div>
-                                    </div>
-                                <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
-                            </div>
-
-                       
-                    <div id="canceled" class="tab-content">
-                    <div class="appointments-list">
-                        <?php if (empty($canceladas)): ?>
-                        <p style="text-align:center;">No tienes citas canceladas.</p>
-                        <?php else: ?>
-                        <?php foreach ($canceladas as $cita): ?>
-                            <div class="appointment-card canceled">
-                            <div class="appointment-date">
-                                <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
-                                <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
-                                <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
-                            </div>
-                            <div class="appointment-details">
-                                <h3><?= $cita['reason'] ?: 'Consulta médica' ?></h3>
-                                <div class="appointment-info">
-                                <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars($cita['doctor_first_name'] . ' ' . $cita['doctor_last_name']) ?></p>
-                                <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
-                                <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
-                                </div>
-                                <div class="appointment-status canceled">
-                                <span>Cancelada</span>
-                                </div>
-                            </div>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    </div>
-                    </div>
-                </div>
+        <div class="appointments-container">
+          <div class="appointments-header">
+            <div class="appointments-tabs">
+              <button class="tab-btn active" data-tab="upcoming">Próximas</button>
+              <button class="tab-btn" data-tab="past">Pasadas</button>
+              <button class="tab-btn" data-tab="canceled">Canceladas</button>
             </div>
-        </section>
+            <a href="<?= BASE_URL ?>/appointments/create" class="btn btn-primary">Nueva Cita</a>
+          </div>
+
+          <div class="appointments-content">
+            <!-- Próximas -->
+            <div id="upcoming" class="tab-content active">
+              <div class="appointments-list">
+                <?php if (empty($proximas)): ?>
+                  <p class="text-center">No tienes citas próximas.</p>
+                <?php else: ?>
+                  <?php foreach ($proximas as $cita): ?>
+                    <div class="appointment-card">
+                      <div class="appointment-date">
+                        <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
+                        <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
+                        <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
+                      </div>
+                      <div class="appointment-details">
+                        <h3><?= htmlspecialchars($cita['reason'] ?: 'Consulta médica') ?></h3>
+                        <div class="appointment-info">
+                          <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars("{$cita['doctor_first_name']} {$cita['doctor_last_name']}") ?></p>
+                          <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
+                          <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
+                        </div>
+                      </div>
+                      <div class="appointment-actions">
+                        <a href="<?= BASE_URL ?>/appointments/cancelar?id=<?= $cita['id'] ?>" class="btn btn-danger">Cancelar</a>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </div>
+            </div>
+
+            <!-- Pasadas -->
+            <div id="past" class="tab-content">
+              <div class="appointments-list">
+                <?php if (empty($pasadas)): ?>
+                  <p class="text-center">No tienes citas pasadas.</p>
+                <?php else: ?>
+                  <?php foreach ($pasadas as $cita): ?>
+                    <?php $isRated = in_array($cita['id'], array_column($valoraciones, 'appointment_id')); ?>
+                    <?php if ($cita['status'] === 'completada' || strtotime($cita['scheduled_at']) < time()): ?>
+                      <div class="appointment-card past">
+                        <div class="appointment-date">
+                          <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
+                          <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
+                          <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
+                        </div>
+                        <div class="appointment-details">
+                          <h3><?= htmlspecialchars($cita['reason'] ?: 'Consulta médica') ?></h3>
+                          <div class="appointment-info">
+                            <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars("{$cita['doctor_first_name']} {$cita['doctor_last_name']}") ?></p>
+                            <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
+                            <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
+                          </div>
+                          <div class="appointment-status <?= $cita['status']==='completada' && $isRated ? 'completed' : 'vencida' ?>">
+                            <span><?= $cita['status']==='completada' ? ($isRated?'Valorada':'Completada') : 'Vencida' ?></span>
+                          </div>
+                        </div>
+                        <?php if ($cita['status'] === 'completada' && ! $isRated): ?>
+                          <div class="appointment-actions">
+                            <a href="<?= BASE_URL ?>/ratings/valoraciones?id=<?= $cita['id'] ?>" class="btn btn-primary">Valorar</a>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </div>
+            </div>
+
+            <!-- Canceladas -->
+            <div id="canceled" class="tab-content">
+              <div class="appointments-list">
+                <?php if (empty($canceladas)): ?>
+                  <p class="text-center">No tienes citas canceladas.</p>
+                <?php else: ?>
+                  <?php foreach ($canceladas as $cita): ?>
+                    <div class="appointment-card canceled">
+                      <div class="appointment-date">
+                        <div class="date-day"><?= date('d', strtotime($cita['scheduled_at'])) ?></div>
+                        <div class="date-month"><?= date('M', strtotime($cita['scheduled_at'])) ?></div>
+                        <div class="date-year"><?= date('Y', strtotime($cita['scheduled_at'])) ?></div>
+                      </div>
+                      <div class="appointment-details">
+                        <h3><?= htmlspecialchars($cita['reason'] ?: 'Consulta médica') ?></h3>
+                        <div class="appointment-info">
+                          <p><strong>Doctor:</strong> Dr. <?= htmlspecialchars("{$cita['doctor_first_name']} {$cita['doctor_last_name']}") ?></p>
+                          <p><strong>Departamento:</strong> <?= htmlspecialchars($cita['departamento']) ?></p>
+                          <p><strong>Hora:</strong> <?= date('h:i A', strtotime($cita['scheduled_at'])) ?></p>
+                        </div>
+                        <div class="appointment-status canceled">
+                          <span>Cancelada</span>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </main>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    
-                    this.classList.add('active');
-                    
-                    
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+          });
         });
+      });
     </script>
+
 </body>
 </html>
+
 
 <style>
         /* Estilos para la sección de citas */
