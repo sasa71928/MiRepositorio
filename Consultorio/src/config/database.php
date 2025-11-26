@@ -34,6 +34,6 @@ try {
     
     // Redirigir a página de error amigable
     // Asegúrate que la ruta sea correcta según tu estructura
-    header("Location: /ProyectoConsultorio/Consultorio/public/src/views/public/error_500.php");
+    require __DIR__ . '/../views/public/error_500.php';
     exit;
 }
