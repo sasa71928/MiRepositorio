@@ -11,19 +11,3 @@ return [
     ]
 ];
 
-/* 
-Por si acaso
-<?php 
-
-return [
-    'base_url'   => 'https://clinigest.infy.uk/public',
-    'assets_url' => 'https://clinigest.infy.uk//public/assets',
-    'db' => [
-        'host' => 'database-1.cboca8ygq4oo.us-east-2.rds.amazonaws.com',
-        'name' => 'clinigest',
-        'user' => 'admin',
-        'password' => 'clinigest'
-    ]
-];
-
-*/
