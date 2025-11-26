@@ -4,6 +4,9 @@
 // Carga la configuración de conexión
 $config = include __DIR__ . '/config.php';
 
+// Importar Logger manualmente si no ha sido cargado
+require_once __DIR__ . '/../helpers/Logger.php';
+
 $host     = $config['db']['host'];
 $dbname   = $config['db']['name'];
 $user     = $config['db']['user'];
@@ -20,9 +23,17 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-    // Si todo bien, devolvemos el objeto
     return $pdo;
 } catch (PDOException $e) {
-    // Detenemos la ejecución mostrando el error de conexión
-    die('Error de conexión a BD: ' . $e->getMessage());
+    // MEJORA DE FIABILIDAD:
+    // 1. No mostramos el error real al usuario (seguridad).
+    // 2. Registramos el error internamente.
+    
+    // Escribir en log de PHP (fallback)
+    error_log("Error Crítico BD: " . $e->getMessage());
+    
+    // Redirigir a página de error amigable
+    // Asegúrate que la ruta sea correcta según tu estructura
+    header("Location: /ProyectoConsultorio/Consultorio/public/src/views/public/error_500.php");
+    exit;
 }

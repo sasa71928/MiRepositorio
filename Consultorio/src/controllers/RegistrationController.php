@@ -1,14 +1,26 @@
 <?php
-// src/controllers/RegistrationController.php
+/**
+ * Controlador de Registro de Usuarios.
+ * * Maneja la lógica de validación, creación de usuarios y asignación de roles.
+ * Implementa mejoras de mantenibilidad mediante el uso de validadores externos y funciones modulares.
+ * * @package CliniGest\Controllers
+ * @version 2.0 (Refactorizado para Mantenibilidad ISO 25010)
+ */
 
 require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../helpers/Validator.php'; // [MEJORA] Importamos el validador
 
 $config = include __DIR__ . '/../config/config.php';
 if (! defined('BASE_URL')) {
     define('BASE_URL', rtrim($config['base_url'], '/'));
 }
 
+/**
+ * Muestra la vista del formulario de registro.
+ *
+ * @return void
+ */
 function showRegister(): void {
     $data = [];
     $errors = [];
@@ -16,10 +28,77 @@ function showRegister(): void {
     exit;
 }
 
+/**
+ * Procesa los datos del formulario de registro.
+ * * @param array $input Datos provenientes de $_POST
+ * @return array Lista de errores encontrados (si los hay)
+ */
 function handleRegister(array $input): array {
     $errors = [];
 
-    $data = [
+    // [MEJORA] Normalización de datos separada de la lógica principal
+    $data = normalizarDatosRegistro($input);
+
+    // [MEJORA] Uso de Validador Centralizado (Mantenibilidad: Reducción de complejidad ciclomática)
+    $camposRequeridos = [
+        'username' => 'Nombre de usuario',
+        'first_name' => 'Nombre',
+        'last_name' => 'Apellido',
+        'email' => 'Correo',
+        'password' => 'Contraseña'
+    ];
+    
+    $errors = array_merge($errors, validar_requeridos($camposRequeridos, $data));
+    
+    if ($msg = validar_email($data['email'])) {
+        $errors[] = $msg;
+    }
+    
+    $errors = array_merge($errors, validar_contrasena($data['password'], $data['confirm_password']));
+
+    if (! $data['notify_email'] && ! $data['notify_sms'] && ! $data['notify_whatsapp']) {
+        $errors[] = "Debes seleccionar al menos un medio de notificación.";
+    }
+
+    // Si hay errores de validación, retornamos antes de intentar conectar a la BD
+    if (! empty($errors)) {
+        guardarEstadoSesion($data, $errors);
+        return $errors;
+    }
+
+    try {
+        $pdo = include __DIR__ . '/../config/database.php';
+
+        // Validar si el usuario ya existe
+        if (existeUsuario($pdo, $data['username'], $data['email'])) {
+            $errors[] = "El nombre de usuario o el correo ya están en uso.";
+            guardarEstadoSesion($data, $errors);
+            return $errors;
+        }
+
+        // Crear usuario (Lógica encapsulada en una función privada para limpieza)
+        crearUsuarioCompleto($pdo, $data);
+
+        unset($_SESSION['registro_data'], $_SESSION['registro_errors']);
+        header('Location: ' . BASE_URL . '/login');
+        exit;
+
+    } catch (PDOException $ex) {
+        // En caso de error crítico, lo registramos pero damos un mensaje amable
+        error_log("Error Registro: " . $ex->getMessage());
+        $errors[] = "Ocurrió un problema al crear tu cuenta. Intenta más tarde.";
+        guardarEstadoSesion($data, $errors);
+        return $errors;
+    }
+}
+
+// --- Funciones Auxiliares Privadas (Mejora de Modularidad) ---
+
+/**
+ * Limpia y prepara el array de datos de entrada.
+ */
+function normalizarDatosRegistro($input) {
+    return [
         'username'            => trim($input['username'] ?? ''),
         'first_name'          => trim($input['first_name'] ?? ''),
         'last_name'           => trim($input['last_name'] ?? ''),
@@ -40,123 +119,74 @@ function handleRegister(array $input): array {
         'notify_whatsapp'     => isset($input['notify_whatsapp']) ? 1 : 0,
         'reminder_days'       => $input['reminder_days'] ?? '1',
     ];
+}
 
-    // Validaciones
-    if ($data['username'] === '') {
-        $errors[] = "El nombre de usuario es obligatorio.";
-    }
-    if ($data['first_name'] === '') {
-        $errors[] = "El nombre es obligatorio.";
-    }
-    if ($data['last_name'] === '') {
-        $errors[] = "El apellido es obligatorio.";
-    }
-    if (! filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "El correo no es válido.";
-    }
-    if (strlen($data['password']) < 6) {
-        $errors[] = "La contraseña debe tener al menos 6 caracteres.";
-    }
-    if ($data['password'] !== $data['confirm_password']) {
-        $errors[] = "La contraseña y su confirmación no coinciden.";
-    }
-    if (! $data['notify_email'] && ! $data['notify_sms'] && ! $data['notify_whatsapp']) {
-        $errors[] = "Debes seleccionar al menos un medio de notificación.";
-    }
-    if ($data['birthdate'] !== '' && ! strtotime($data['birthdate'])) {
-        $errors[] = "La fecha de nacimiento no es válida.";
-    }
+/**
+ * Verifica si un usuario o correo ya existen en la base de datos.
+ */
+function existeUsuario($pdo, $user, $email) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?");
+    $stmt->execute([$user, $email]);
+    return $stmt->fetchColumn() > 0;
+}
 
-    if (! empty($errors)) {
-        $_SESSION['registro_data']   = $data;
-        $_SESSION['registro_errors'] = $errors;
-        return $errors;
-    }
+/**
+ * Guarda los datos en sesión para repoblarlos si hay error.
+ */
+function guardarEstadoSesion($data, $errors) {
+    $_SESSION['registro_data'] = $data;
+    $_SESSION['registro_errors'] = $errors;
+}
+
+/**
+ * Ejecuta las inserciones en las 3 tablas correspondientes.
+ * Se envuelve en una transacción para integridad de datos.
+ */
+function crearUsuarioCompleto($pdo, $data) {
+    // [MEJORA] Uso de Transacciones (Fiabilidad de datos)
+    $pdo->beginTransaction();
 
     try {
-        $pdo = include __DIR__ . '/../config/database.php';
-
-        // Validar que el usuario/correo no exista
-        $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?");
-        $stmtCheck->execute([$data['username'], $data['email']]);
-        if ($stmtCheck->fetchColumn() > 0) {
-            $errors[] = "El nombre de usuario o el correo ya están en uso.";
-            $_SESSION['registro_data']   = $data;
-            $_SESSION['registro_errors'] = $errors;
-            return $errors;
-        }
-
-        // Obtener ID del rol
+        // 1. Obtener Rol
         $stmtRole = $pdo->prepare("SELECT id FROM roles WHERE name = ?");
         $stmtRole->execute(['user']);
-        $rolRow = $stmtRole->fetch(PDO::FETCH_ASSOC);
-        if (! $rolRow) {
-            $errors[] = "El rol 'user' no existe en la tabla roles.";
-            $_SESSION['registro_data']   = $data;
-            $_SESSION['registro_errors'] = $errors;
-            return $errors;
-        }
-        $roleId = (int) $rolRow['id'];
+        $roleId = $stmtRole->fetchColumn();
 
-        // Insertar en users
+        // 2. Insertar Usuario
         $stmtUser = $pdo->prepare(
-            "INSERT INTO users 
-             (role_id, username, password_hash, first_name, last_name, email, phone, birthdate, gender, address, city, created_at) 
+            "INSERT INTO users (role_id, username, password_hash, first_name, last_name, email, phone, birthdate, gender, address, city, created_at) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
         );
-        $hash = password_hash($data['password'], PASSWORD_DEFAULT);
+        
         $stmtUser->execute([
-            $roleId,
-            $data['username'],
-            $hash,
-            $data['first_name'],
-            $data['last_name'],
-            $data['email'],
-            $data['phone'] !== '' ? $data['phone'] : null,
-            $data['birthdate'] !== '' ? $data['birthdate'] : null,
-            $data['gender'] !== '' ? $data['gender'] : null,
-            $data['address'] !== '' ? $data['address'] : null,
-            $data['city'] !== '' ? $data['city'] : null
+            $roleId, $data['username'], password_hash($data['password'], PASSWORD_DEFAULT),
+            $data['first_name'], $data['last_name'], $data['email'],
+            $data['phone'] ?: null, $data['birthdate'] ?: null, $data['gender'] ?: null,
+            $data['address'] ?: null, $data['city'] ?: null
         ]);
 
         $newUserId = $pdo->lastInsertId();
 
-        // Insertar en medical_info
+        // 3. Insertar Info Médica
         $stmtMed = $pdo->prepare(
-            "INSERT INTO medical_info 
-             (user_id, blood_type, allergies, chronic_diseases, current_medications) 
-             VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO medical_info (user_id, blood_type, allergies, chronic_diseases, current_medications) VALUES (?, ?, ?, ?, ?)"
         );
         $stmtMed->execute([
-            $newUserId,
-            $data['blood_type']          !== null ? $data['blood_type'] : null,
-            $data['allergies']           !== ''   ? $data['allergies'] : null,
-            $data['chronic_diseases']    !== ''   ? $data['chronic_diseases'] : null,
-            $data['current_medications'] !== ''   ? $data['current_medications'] : null
+            $newUserId, $data['blood_type'] ?: null, $data['allergies'] ?: null,
+            $data['chronic_diseases'] ?: null, $data['current_medications'] ?: null
         ]);
 
-        // Insertar en user_preferences
+        // 4. Insertar Preferencias
         $stmtPref = $pdo->prepare(
-            "INSERT INTO user_preferences
-             (user_id, notify_email, notify_sms, notify_whatsapp, reminder_days)
-             VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO user_preferences (user_id, notify_email, notify_sms, notify_whatsapp, reminder_days) VALUES (?, ?, ?, ?, ?)"
         );
         $stmtPref->execute([
-            $newUserId,
-            $data['notify_email'],
-            $data['notify_sms'],
-            $data['notify_whatsapp'],
-            (int)$data['reminder_days']
+            $newUserId, $data['notify_email'], $data['notify_sms'], $data['notify_whatsapp'], (int)$data['reminder_days']
         ]);
 
-        unset($_SESSION['registro_data'], $_SESSION['registro_errors']);
-        header('Location: ' . BASE_URL . '/login');
-        exit;
-
-    } catch (PDOException $ex) {
-        $errors[] = "Error al registrar usuario: " . $ex->getMessage();
-        $_SESSION['registro_data']   = $data;
-        $_SESSION['registro_errors'] = $errors;
-        return $errors;
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack(); // Si algo falla, deshacemos todo
+        throw $e; // Re-lanzamos el error para que lo capture el try-catch principal
     }
 }
