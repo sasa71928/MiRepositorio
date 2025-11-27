@@ -55,12 +55,14 @@ switch ($request) {
             }
             break;
 
-        case '/logout':
+        
+            case '/logout':
             require_once __DIR__ . '/../src/controllers/LogoutController.php';
             handleLogout();
             break;
 
-        case '/registro':
+        
+            case '/registro':
             require_once __DIR__ . '/../src/controllers/RegistrationController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors = handleRegister($_POST);
@@ -180,8 +182,15 @@ switch ($request) {
         case '/adminDoctors/crearDoctor':
             require_once __DIR__ . '/../src/controllers/AdminController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                crearDoctor($_POST);  // Asegúrate de que esta función existe
-                header('Location: ' . BASE_URL . '/adminDoctors/gestionar'); // redirige de vuelta a la vista
+                if (crearDoctor($_POST)) {
+                    // Éxito: Devolvemos 200 OK para que el JS lo detecte
+                    http_response_code(200);
+                    echo json_encode(['status' => 'success']);
+                } else {
+                    // Error: Devolvemos 500 para que el JS lance la alerta
+                    http_response_code(500);
+                    echo json_encode(['status' => 'error', 'message' => 'No se pudo crear el doctor']);
+                }
                 exit;
             }
         break;
@@ -189,11 +198,34 @@ switch ($request) {
         case '/adminDoctors/editarDoctor':
             require_once __DIR__ . '/../src/controllers/AdminController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                editarDoctor($_POST);
-                header('Location: ' . BASE_URL . '/adminDoctors/gestionar?mensaje=actualizado');
+                if (editarDoctor($_POST)) {
+                    // Éxito
+                    http_response_code(200);
+                    echo json_encode(['status' => 'success']);
+                } else {
+                    // Error
+                    http_response_code(500);
+                    echo json_encode(['status' => 'error', 'message' => 'No se pudo actualizar el doctor']);
+                }
                 exit;
             }
-            break;
+        break;
+
+        case '/adminDoctors/editarDoctor':
+            require_once __DIR__ . '/../src/controllers/AdminController.php';
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (editarDoctor($_POST)) {
+                    // Éxito: Redirigir o solo 200 OK si es AJAX
+                    header('Location: ' . BASE_URL . '/adminDoctors/gestionar?mensaje=actualizado');
+                } else {
+                    // Fallo: Mandar error 500 para que el JS lo cache
+                    http_response_code(500);
+                    echo "Error al actualizar";
+                }
+                exit;
+            }
+        break;
+        
         case '/adminDoctors/gestionar':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -203,6 +235,7 @@ switch ($request) {
             }
             require_once __DIR__ . '/../../src/views/admin/doctors/gestionDoctores.php';
         break;
+
         case '/appointments/create':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -245,25 +278,27 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/appointments/misCitas.php';
         break;
+
         case '/appointments/cancelar':
-        require_once __DIR__ . '/../src/helpers/auth.php';
-        require_login();
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
-        if ($_SESSION['user']['role'] !== 'user') {
-            header('Location: ' . BASE_URL . '/');
-            exit;
-        }
+            if ($_SESSION['user']['role'] !== 'user') {
+                header('Location: ' . BASE_URL . '/');
+                exit;
+            }
 
-        if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+            if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+                header('Location: ' . BASE_URL . '/appointments/mine');
+                exit;
+            }
+
+            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+            cancelarCita((int)$_GET['id'], $_SESSION['user']['id']);
+
             header('Location: ' . BASE_URL . '/appointments/mine');
-            exit;
-        }
-
-        require_once __DIR__ . '/../src/controllers/AppointmentController.php';
-        cancelarCita((int)$_GET['id'], $_SESSION['user']['id']);
-
-        header('Location: ' . BASE_URL . '/appointments/mine');
         exit;
+
         case '/ratings/valoraciones':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -282,7 +317,8 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/ratings/valoraciones.php';
             break;
-        case '/ratings/guardarValoracion':
+        
+            case '/ratings/guardarValoracion':
             require_once __DIR__ . '/../src/helpers/auth.php'; 
             require_once __DIR__ . '/../src/controllers/RatingController.php';
             require_login();
@@ -292,7 +328,8 @@ switch ($request) {
                 header('Location: ' . BASE_URL . '/ratings/valoraciones?success=1');
                 exit;
             }
-            break;
+        break;
+
         case '/doctor-home':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -307,6 +344,7 @@ switch ($request) {
 
             require_once __DIR__ . '/../src/views/doctors/doctorVista.php';
         break;
+
         case '/consultaCita':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -330,7 +368,8 @@ switch ($request) {
             }
 
             require_once __DIR__ . '/../src/views/doctors/consultaCita.php';
-         break;
+        break;
+
         case '/doctor/cancelarCita':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -350,7 +389,8 @@ switch ($request) {
 
             header('Location: ' . BASE_URL . '/doctor-home');
             exit;
-            break;
+        break;
+
         case '/appointments/complete':
             require_once __DIR__ . '/../src/controllers/AppointmentController.php';
 
@@ -365,7 +405,8 @@ switch ($request) {
                 }
                 exit;
             }
-            break;
+        break;
+
         case '/listaPacientes':
             require_once __DIR__ . '/../src/controllers/AppointmentController.php';
             require_once __DIR__ . '/../src/helpers/auth.php';
@@ -381,6 +422,7 @@ switch ($request) {
 
             include __DIR__ . '/../src/views/doctors/listaPacientes.php';
         break;
+
         case '/departamento':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -394,43 +436,45 @@ switch ($request) {
             $departamentos = obtenerDepartamentos(); // <- aquí cargas los datos
 
             include __DIR__ . '/../src/views/admin/departamentos.php'; // <- solo se carga la vista
-            break;
-            case '/departamento/crear':
-                require_once __DIR__ . '/../src/helpers/auth.php';
-                require_login();
+        break;
 
-                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
-                    require_once __DIR__ . '/../src/controllers/AdminController.php';
-                    crearDepartamento($_POST['nombre']);
-                }
+        case '/departamento/crear':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
-                header('Location: ' . BASE_URL . '/departamento');
-                exit;
+            if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                require_once __DIR__ . '/../src/controllers/AdminController.php';
+                crearDepartamento($_POST['nombre']);
+            }
 
-            case '/departamento/editar':
-                require_once __DIR__ . '/../src/helpers/auth.php';
-                require_login();
+            header('Location: ' . BASE_URL . '/departamento');
+        exit;
 
-                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
-                    require_once __DIR__ . '/../src/controllers/AdminController.php';
-                    editarDepartamento($_POST['id'], $_POST['nombre']);
-                }
+        case '/departamento/editar':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
-                header('Location: ' . BASE_URL . '/departamento');
-                exit;
+            if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                require_once __DIR__ . '/../src/controllers/AdminController.php';
+                editarDepartamento($_POST['id'], $_POST['nombre']);
+            }
 
-            case '/departamento/eliminar':
-                require_once __DIR__ . '/../src/helpers/auth.php';
-                require_login();
+            header('Location: ' . BASE_URL . '/departamento');
+        exit;
 
-                if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
-                    require_once __DIR__ . '/../src/controllers/AdminController.php';
-                    eliminarDepartamento($_POST['id']);
-                }
+        case '/departamento/eliminar':
+            require_once __DIR__ . '/../src/helpers/auth.php';
+            require_login();
 
-                header('Location: ' . BASE_URL . '/departamento');
-                exit;
-            case '/reportesAdmin':
+            if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                require_once __DIR__ . '/../src/controllers/AdminController.php';
+                eliminarDepartamento($_POST['id']);
+            }
+
+            header('Location: ' . BASE_URL . '/departamento');
+        exit;
+
+        case '/reportesAdmin':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
 
@@ -443,7 +487,8 @@ switch ($request) {
             $reporte = generarReporteGeneral(); // función que retorna datos agregados
 
             include __DIR__ . '/../src/views/admin/reportes.php';
-            break;
+        break;
+
         case '/reporte/enviar':
             require_once __DIR__ . '/../src/controllers/ReportePDFController.php';
             $correo = $_SESSION['user']['email'] ?? 'osalazarsalas@gmail.com';
@@ -454,8 +499,8 @@ switch ($request) {
                 header('Location: ' . BASE_URL . '/');
             }
         exit;
+
     default:
-        // Cualquier otra ruta → 404
         require_once __DIR__ . '/errores.php';
-        break;
+    break;
 }

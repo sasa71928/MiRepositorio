@@ -16,7 +16,6 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
 
 ?>
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -45,17 +44,20 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
             flex-direction: column;
         }
     }
-
+    .btn-limpiar {
+        text-decoration: none !important;
+        color: white;
+    }
+    .btn-limpiar:visited {
+        color: white;
+    }
 </style>
 
 <body>
     <?php include_once __DIR__ . '/../../layouts/header.php'; ?>
     <main class="main">
         <div class="dashboard-container">
-    
-            <!-- Contenido Principal -->
             <div class="dashboard-content">
-                <!-- Seccion de arriba -->
                 <section class="content-header">
                     <div class="header-title">
                         <h1>Gestión de Doctores</h1>
@@ -68,50 +70,30 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                     </div>
                 </section>
                 
-                <!-- Filtros y Búsqueda -->
                 <form method="GET" action="<?= BASE_URL ?>/adminDoctors/gestionar">
                     <section class="filters-section">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input
-                                type="text"
-                                name="nombre"
-                                placeholder="Buscar doctor..."
-                                value="<?= htmlspecialchars($nombreBuscado) ?>"
-                            >
+                            <input type="text" name="nombre" placeholder="Buscar doctor..." value="<?= htmlspecialchars($nombreBuscado) ?>">
                         </div>
 
                         <div class="filter-options">
-                            <select name="departamento">
+                            <select name="departamento" id="filtroDepartamento">
                                 <option value="">Todos los departamentos</option>
                                 <?php foreach ($departamentos as $dep): ?>
-                                    <option value="<?= htmlspecialchars($dep['name']) ?>"
-                                        <?= ($filtroDepartamento === $dep['name']) ? 'selected' : '' ?>>
+                                    <option value="<?= htmlspecialchars($dep['name']) ?>" <?= ($filtroDepartamento === $dep['name']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($dep['name']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
-                <div id="filter-actions" class="btn btn-primary">
-                    <a href="<?= BASE_URL ?>/adminDoctors/gestionar" class="btn-limpiar">Limpiar filtros</a>
-                    <style>
-                            .btn-limpiar {
-                            text-decoration: none !important;  /* elimina subrayado */
-                        }
-                        .btn-limpiar:visited {
-                            color: white;
-                            text-decoration: none;
-                        }
-                     </style>
-
-                </div>
-
+                        <div id="filter-actions" class="btn btn-primary">
+                            <a href="<?= BASE_URL ?>/adminDoctors/gestionar" class="btn-limpiar">Limpiar filtros</a>
+                        </div>
                     </section>
                 </form>
 
-                
-                <!-- Lista de Doctores -->
                 <section class="doctors-list-section">
                     <div class="doctors-table-container">
                         <table class="doctors-table">
@@ -128,9 +110,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                             <tbody>
                                 <?php if (count($doctores) === 0): ?>
                                     <tr>
-                                        <td colspan="6" style="text-align: center; padding: 20px; color: #999;">
-                                            No se encontraron doctores que coincidan con la búsqueda o filtro seleccionado.
-                                        </td>
+                                        <td colspan="6" style="text-align: center; padding: 20px; color: #999;">No se encontraron doctores.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($doctores as $doctor): ?>
@@ -157,49 +137,36 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                                                     title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                            <button class="btn-icon btn-delete" title="Eliminar"
-                                                    data-id="<?= $doctor['id'] ?>"
-                                                    data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-
+                                                <button class="btn-icon btn-delete" title="Eliminar"
+                                                        data-id="<?= $doctor['id'] ?>"
+                                                        data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
-
-
                         </table>
                     </div>
                     
-                    <!-- Paginación -->
-                        <div class="pagination">
-                            <?php if ($paginaActual > 1): ?>
-                                <a href="?pagina=<?= $paginaActual - 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            <?php endif; ?>
-
-                            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                                <a href="?pagina=<?= $i ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>"
-                                class="pagination-btn <?= $i == $paginaActual ? 'active' : '' ?>">
-                                    <?= $i ?>
-                                </a>
-                            <?php endfor; ?>
-
-                            <?php if ($paginaActual < $totalPaginas): ?>
-                                <a href="?pagina=<?= $paginaActual + 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            <?php endif; ?>
-                        </div>
+                    <div class="pagination">
+                        <?php if ($paginaActual > 1): ?>
+                            <a href="?pagina=<?= $paginaActual - 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
+                        <?php endif; ?>
+                        <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                            <a href="?pagina=<?= $i ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn <?= $i == $paginaActual ? 'active' : '' ?>"><?= $i ?></a>
+                        <?php endfor; ?>
+                        <?php if ($paginaActual < $totalPaginas): ?>
+                            <a href="?pagina=<?= $paginaActual + 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn"><i class="fas fa-chevron-right"></i></a>
+                        <?php endif; ?>
+                    </div>
                 </section>
             </div>
         </div>
     </main>
     
-    <!-- Modal para Agregar Doctor -->
+    <!-- Modal Agregar -->
     <div id="modalAgregarDoctor" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -209,90 +176,53 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
             <div class="modal-body">
                 <form id="formAgregarDoctor" action="<?= BASE_URL ?>/adminDoctors/crearDoctor" method="POST">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="username">Nombre de Usuario</label>
-                            <input type="text" id="username" name="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="first_name">Nombre(s)</label>
-                            <input type="text" id="first_name" name="first_name" required>
-                        </div>
+                        <div class="form-group"><label>Usuario</label><input type="text" name="username" required></div>
+                        <div class="form-group"><label>Nombre(s)</label><input type="text" name="first_name" required></div>
                     </div>
-
+                    <div class="form-row">
+                        <div class="form-group"><label>Apellidos</label><input type="text" name="last_name" required></div>
+                        <div class="form-group"><label>Fecha Nacimiento</label><input type="date" name="birthdate" required></div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="last_name">Apellidos</label>
-                            <input type="text" id="last_name" name="last_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="birthdate">Fecha de Nacimiento</label>
-                            <input type="date" id="birthdate" name="birthdate" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="gender">Género</label>
-                            <select id="gender" name="gender" required>
+                            <label>Género</label>
+                            <select name="gender" required>
                                 <option value="">Seleccione...</option>
                                 <option value="M">Masculino</option>
                                 <option value="F">Femenino</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="address">Dirección</label>
-                            <input type="text" id="address" name="address" required>
-                        </div>
+                        <div class="form-group"><label>Dirección</label><input type="text" name="address" required></div>
                     </div>
-
                     <div class="form-row">
+                        <div class="form-group"><label>Ciudad</label><input type="text" name="city" required></div>
                         <div class="form-group">
-                            <label for="city">Ciudad</label>
-                            <input type="text" id="city" name="city" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="departamento">Departamento</label>
-                            <select id="departamento" name="department_id" required>
+                            <label>Departamento</label>
+                            <select name="department_id" required>
                                 <?php foreach ($departamentos as $dep): ?>
                                     <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
-
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="email">Correo Electrónico</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="telefono">Teléfono</label>
-                            <input type="tel" id="telefono" name="phone" required>
-                        </div>
+                        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                        <div class="form-group"><label>Teléfono</label><input type="tel" name="phone" required></div>
                     </div>
-
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="cedula">Cédula Profesional</label>
-                            <input type="text" id="cedula" name="cedula" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Contraseña Temporal</label>
-                            <input type="password" id="password" name="password" required>
-                        </div>
+                        <div class="form-group"><label>Cédula</label><input type="text" name="cedula" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" name="password" required></div>
                     </div>
-
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" id="btnCancelarAgregar">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="btnConfirmarAgregar">Guardar Doctor</button>
+                        <button type="button" class="btn btn-outline close-modal-btn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Doctor</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    
-    <!-- Modal de Confirmación para Eliminar Doctor -->
+    <!-- Modal Eliminar -->
     <div id="modalConfirmarEliminar" class="modal">
         <div class="modal-content modal-sm">
             <div class="modal-header">
@@ -303,17 +233,16 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                 <div class="confirmation-message">
                     <i class="fas fa-exclamation-triangle warning-icon"></i>
                     <p>¿Está seguro que desea eliminar al doctor <span id="doctorName"></span>?</p>
-                    <p class="text-danger">Esta acción no se puede deshacer.</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" id="btnCancelarEliminar">Cancelar</button>
+                <button class="btn btn-outline close-modal-btn">Cancelar</button>
                 <button class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
             </div>
         </div>
     </div>
     
-    <!-- Modal de Confirmación Exitosa -->
+    <!-- Modal Exito -->
     <div id="modalExito" class="modal">
         <div class="modal-content modal-sm">
             <div class="modal-header">
@@ -332,229 +261,87 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
         </div>
     </div>
 
-    <!-- Modal para Editar Doctor -->
-<div id="modalEditarDoctor" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Editar Doctor</h2>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="formEditarDoctor" action="<?= BASE_URL ?>/adminDoctors/editarDoctor" method="POST">
-                <input type="hidden" id="edit_id" name="edit_id">
+    <!-- Modal Editar -->
+    <div id="modalEditarDoctor" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Doctor</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarDoctor" action="<?= BASE_URL ?>/adminDoctors/editarDoctor" method="POST">
+                    <!-- El ID del doctor es crucial -->
+                    <input type="hidden" id="edit_id" name="id">
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit_username">Nombre de Usuario</label>
-                        <input type="text" id="edit_username" name="username" required>
+                    <div class="form-row">
+                        <div class="form-group"><label>Usuario</label><input type="text" id="edit_username" name="username" required></div>
+                        <div class="form-group"><label>Nombre(s)</label><input type="text" id="edit_first_name" name="first_name" required></div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="edit_first_name">Nombre(s)</label>
-                        <input type="text" id="edit_first_name" name="first_name" required>
+                    <div class="form-group"><label>Apellidos</label><input type="text" id="edit_last_name" name="last_name" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Fecha Nacimiento</label><input type="date" id="edit_birthdate" name="birthdate" required></div>
+                        <div class="form-group">
+                            <label>Género</label>
+                            <select id="edit_gender" name="gender" required>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit_last_name">Apellidos</label>
-                    <input type="text" id="edit_last_name" name="last_name" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit_birthdate">Fecha de Nacimiento</label>
-                        <input type="date" id="edit_birthdate" name="birthdate" required>
+                    <div class="form-row">
+                        <div class="form-group"><label>Dirección</label><input type="text" id="edit_address" name="address" required></div>
+                        <div class="form-group"><label>Ciudad</label><input type="text" id="edit_city" name="city" required></div>
                     </div>
-
                     <div class="form-group">
-                        <label for="edit_gender">Género</label>
-                        <select id="edit_gender" name="gender" required>
-                            <option value="">Seleccione...</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Femenino</option>
+                        <label>Departamento</label>
+                        <select id="edit_especialidad" name="departamento_id" required>
+                            <?php foreach ($departamentos as $dep): ?>
+                                <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit_address">Dirección</label>
-                        <input type="text" id="edit_address" name="address" required>
+                    <div class="form-row">
+                        <div class="form-group"><label>Email</label><input type="email" id="edit_email" name="email" required></div>
+                        <div class="form-group"><label>Teléfono</label><input type="tel" id="edit_telefono" name="phone" required></div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="edit_city">Ciudad</label>
-                        <input type="text" id="edit_city" name="city" required>
+                    <div class="form-group"><label>Cédula</label><input type="text" id="edit_cedula" name="cedula" required></div>
+                    <div class="form-group"><label>Nueva Contraseña (opcional)</label><input type="password" id="edit_password" name="password"></div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline close-modal-btn">Cancelar</button>
+                        <!-- Importante: type="button" para manejarlo con JS y FormData -->
+                        <button type="button" class="btn btn-primary" id="btnConfirmarEditar">Guardar Cambios</button>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit_especialidad">Departamento</label>
-                    <select id="edit_especialidad" name="departamento_id" required>
-                        <?php foreach ($departamentos as $dep): ?>
-                            <option value="<?= $dep['id'] ?>"><?= htmlspecialchars($dep['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit_email">Correo Electrónico</label>
-                        <input type="email" id="edit_email" name="email" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="edit_telefono">Teléfono</label>
-                        <input type="tel" id="edit_telefono" name="phone" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit_cedula">Cédula Profesional</label>
-                    <input type="text" id="edit_cedula" name="cedula" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit_password">Nueva Contraseña (dejar en blanco para mantener la actual)</label>
-                    <input type="password" id="edit_password" name="password">
-                </div>
-            </form>
-
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline" id="btnCancelarEditar">Cancelar</button>
-            <button class="btn btn-primary" id="btnConfirmarEditar">Guardar Cambios</button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
     
     <script>
-        // Funcionalidad para los modales
-        document.addEventListener('DOMContentLoaded', function() {
-            // Referencias a los modales
-            const modalAgregarDoctor = document.getElementById('modalAgregarDoctor');
-            const modalConfirmarEliminar = document.getElementById('modalConfirmarEliminar');
-            const modalExito = document.getElementById('modalExito');
-            
-            // Botones para abrir modales
-            const btnAgregarDoctor = document.getElementById('btnAgregarDoctor');
-            const btnsEliminar = document.querySelectorAll('.btn-delete');
-            
-            // Botones para cerrar modales
-            const closeButtons = document.querySelectorAll('.close-modal');
-            
-            // Botones de acción en modales
-            const btnCancelarAgregar = document.getElementById('btnCancelarAgregar');
-            const btnConfirmarAgregar = document.getElementById('btnConfirmarAgregar');
-            const btnCancelarEliminar = document.getElementById('btnCancelarEliminar');
-            const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
-            const btnAceptarExito = document.getElementById('btnAceptarExito');
-            
-            // Abrir modal de agregar doctor
-            btnAgregarDoctor.addEventListener('click', function() {
-                modalAgregarDoctor.style.display = 'flex';
-            });
-            
-            // Configurar botones de eliminar
-            btnsEliminar.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const doctorId = this.getAttribute('data-id');
-                    const doctorName = this.getAttribute('data-name');
-                    document.getElementById('doctorName').textContent = doctorName;
-                    modalConfirmarEliminar.setAttribute('data-id', doctorId);
-                    modalConfirmarEliminar.style.display = 'flex';
-                });
-            });
-            
-            // Cerrar modales con botón X
-            closeButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    this.closest('.modal').style.display = 'none';
-                });
-            });
-            
-            // Cerrar modal al hacer clic fuera del contenido
-            window.addEventListener('click', function(event) {
-                if (event.target.classList.contains('modal')) {
-                    event.target.style.display = 'none';
-                }
-            });
-            
-            // Cancelar agregar doctor
-            btnCancelarAgregar.addEventListener('click', function() {
-                modalAgregarDoctor.style.display = 'none';
-                document.getElementById('formAgregarDoctor').reset();
-            });
-            
-            // Confirmar agregar doctor
-            document.getElementById('btnConfirmarAgregar').addEventListener('click', async function () {
-                const form = document.getElementById('formAgregarDoctor');
-                
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos
+        const modals = document.querySelectorAll('.modal');
+        const closeBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
+        
+        // Cerrar modales
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => modals.forEach(m => m.style.display = 'none'));
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+        });
 
-                const formData = new FormData(form);
-                
-                try {
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    });
+        // --- AGREGAR DOCTOR ---
+        document.getElementById('btnAgregarDoctor').addEventListener('click', () => {
+            document.getElementById('modalAgregarDoctor').style.display = 'flex';
+        });
 
-                    if (response.ok) {
-                        // Ocultar modal de agregar
-                        document.getElementById('modalAgregarDoctor').style.display = 'none';
-                        
-                        // Mostrar modal de éxito
-                        document.getElementById('mensajeExito').textContent = 'El doctor ha sido agregado exitosamente.';
-                        document.getElementById('modalExito').style.display = 'flex';
-
-                        // Resetear formulario
-                        form.reset();
-                    } else {
-                        alert('❌ Error al guardar el doctor.');
-                    }
-                } catch (err) {
-                    console.error('Error de red o JS:', err);
-                    alert('❌ Ocurrió un error inesperado.');
-                }
-            });
-
-            
-            // Cancelar eliminar doctor
-            btnCancelarEliminar.addEventListener('click', function() {
-                modalConfirmarEliminar.style.display = 'none';
-            });
-            
-            // Confirmar eliminar doctor
-            btnConfirmarEliminar.addEventListener('click', function() {
-                const doctorId = modalConfirmarEliminar.getAttribute('data-id');
-                // Aquí iría la lógica para eliminar el doctor del servidor
-                modalConfirmarEliminar.style.display = 'none';
-                document.getElementById('mensajeExito').textContent = 'El doctor ha sido eliminado exitosamente.';
-                modalExito.style.display = 'flex';
-            });
-            
-            // Aceptar mensaje de éxito
-            btnAceptarExito.addEventListener('click', function() {
-                modalExito.style.display = 'none';
-                // Opcionalmente, recargar la página para mostrar los cambios
-                // window.location.reload();
-            });
-
-            // Referencias para el modal de editar
-        const modalEditarDoctor = document.getElementById('modalEditarDoctor');
-        const btnsEditar = document.querySelectorAll('.btn-edit');
-        const btnCancelarEditar = document.getElementById('btnCancelarEditar');
-        const btnConfirmarEditar = document.getElementById('btnConfirmarEditar');
-
-        // Configurar botones de editar
-        btnsEditar.forEach(btn => {
-            btn.addEventListener('click', function () {
+        // --- EDITAR DOCTOR ---
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', function() {
                 const d = this.dataset;
-
+                // Llenar formulario
                 document.getElementById('edit_id').value = d.id;
                 document.getElementById('edit_username').value = d.username;
                 document.getElementById('edit_first_name').value = d.first_name;
@@ -566,136 +353,67 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                 document.getElementById('edit_email').value = d.email;
                 document.getElementById('edit_telefono').value = d.phone;
                 document.getElementById('edit_cedula').value = d.cedula;
-
-                // Seleccionar el departamento
-                const depSelect = document.getElementById('edit_especialidad');
-                if (d.departamento_id) {
-                    depSelect.value = d.departamento_id;
-                }
-
-                modalEditarDoctor.style.display = 'flex';
+                document.getElementById('edit_especialidad').value = d.departamento_id;
+                
+                document.getElementById('modalEditarDoctor').style.display = 'flex';
             });
         });
 
+        // --- GUARDAR EDICIÓN (CORRECCIÓN CLAVE) ---
+        document.getElementById('btnConfirmarEditar').addEventListener('click', async function() {
+            const form = document.getElementById('formEditarDoctor');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
 
+            // [CORRECCIÓN] Usar FormData para enviar como formulario tradicional (POST)
+            // Esto asegura que $_POST se llene correctamente en el servidor.
+            const formData = new FormData(form);
 
-        // Cancelar editar doctor
-        btnCancelarEditar.addEventListener('click', function() {
-            modalEditarDoctor.style.display = 'none';
-            document.getElementById('formEditarDoctor').reset();
-        });
-
-            // Confirmar editar doctor
-btnConfirmarEditar.addEventListener('click', async function () {
-    const form = document.getElementById('formEditarDoctor');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const data = {
-        id: document.getElementById('edit_id').value,
-        username: document.getElementById('edit_username').value,
-        first_name: document.getElementById('edit_first_name').value,
-        last_name: document.getElementById('edit_last_name').value,
-        birthdate: document.getElementById('edit_birthdate').value,
-        gender: document.getElementById('edit_gender').value,
-        address: document.getElementById('edit_address').value,
-        city: document.getElementById('edit_city').value,
-        departamento_id: document.getElementById('edit_especialidad').value,
-        email: document.getElementById('edit_email').value,
-        phone: document.getElementById('edit_telefono').value,
-        cedula: document.getElementById('edit_cedula').value,
-        password: document.getElementById('edit_password').value
-    };
-
-    console.log("🟢 Datos capturados para actualizar:", data);
-
-    try {
-        const response = await fetch('<?= BASE_URL ?>/adminDoctors/editarDoctor', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-            if (response.ok) {
-                modalEditarDoctor.style.display = 'none';
-                document.getElementById('mensajeExito').textContent = 'El doctor ha sido actualizado exitosamente.';
-                modalExito.style.display = 'flex';
-
-                // Actualizar la fila en la tabla (sin recargar la página)
-                const fila = document.querySelector(`tr[data-id="${data.id}"]`);
-                if (fila) {
-                    fila.children[1].textContent = data.first_name + ' ' + data.last_name;
-                    fila.children[2].textContent = document.querySelector(`#edit_especialidad option[value="${data.departamento_id}"]`)?.textContent || '';
-                    fila.children[3].textContent = data.email;
-                    fila.children[4].textContent = data.phone;
-
-                    // Actualizar atributos del botón de editar
-                    const btnEditar = fila.querySelector('.btn-edit');
-                    if (btnEditar) {
-                        btnEditar.dataset.username = data.username;
-                        btnEditar.dataset.first_name = data.first_name;
-                        btnEditar.dataset.last_name = data.last_name;
-                        btnEditar.dataset.birthdate = data.birthdate;
-                        btnEditar.dataset.gender = data.gender;
-                        btnEditar.dataset.address = data.address;
-                        btnEditar.dataset.city = data.city;
-                        btnEditar.dataset.departamento_id = data.departamento_id;
-                        btnEditar.dataset.email = data.email;
-                        btnEditar.dataset.phone = data.phone;
-                        btnEditar.dataset.cedula = data.cedula;
-                    }
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Como el controlador hace un redirect, fetch seguirá la redirección.
+                // Si la respuesta es ok (200), asumimos éxito.
+                if (response.ok) {
+                    document.getElementById('modalEditarDoctor').style.display = 'none';
+                    document.getElementById('mensajeExito').textContent = 'Doctor actualizado correctamente.';
+                    document.getElementById('modalExito').style.display = 'flex';
+                } else {
+                    alert('Hubo un error al guardar los cambios.');
                 }
-                    form.reset();
-                    } else {
-                    alert('❌ Error al editar el doctor.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Ocurrió un error inesperado.');
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión.');
             }
         });
 
-
+        // --- ELIMINAR ---
+        // (Lógica de UI para mostrar modal, la eliminación real dependerá de tu implementación en backend)
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                document.getElementById('doctorName').textContent = name;
+                document.getElementById('modalConfirmarEliminar').style.display = 'flex';
+                // Aquí podrías setear el ID en el botón de confirmar para hacer el fetch de borrado
             });
+        });
 
-        document.addEventListener('DOMContentLoaded', function () {
-    const filtroDepartamento = document.getElementById('filtroDepartamento');
-    const buscarDoctor = document.getElementById('buscarDoctor');
-
-    // Evento para filtro de departamento
-    filtroDepartamento.addEventListener('change', () => {
-        actualizarURL();
-    });
-
-    // Evento para enter en búsqueda
-    buscarDoctor.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            actualizarURL();
-        }
-    });
-
-    function actualizarURL() {
-        const departamento = filtroDepartamento.value;
-        const buscar = buscarDoctor.value.trim();
-        const parametros = new URLSearchParams();
-
-        if (departamento) parametros.set('departamento', departamento);
-        if (buscar) parametros.set('buscar', buscar);
-
-        window.location.href = '?' + parametros.toString();
-    }
-});
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectDepartamento = document.querySelector('select[name="departamento"]');
-        if (selectDepartamento) {
-            selectDepartamento.addEventListener('change', function () {
-                this.form.submit(); // envía el formulario automáticamente
+        // Recargar al aceptar éxito
+        document.getElementById('btnAceptarExito').addEventListener('click', () => {
+            window.location.reload();
+        });
+        
+        // Filtro automático
+        const selectDep = document.getElementById('filtroDepartamento');
+        if(selectDep) {
+            selectDep.addEventListener('change', function() {
+                this.form.submit();
             });
         }
     });
