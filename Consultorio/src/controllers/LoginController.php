@@ -2,7 +2,7 @@
 // src/controllers/LoginController.php
 
 require_once __DIR__ . '/../helpers/auth.php';
-require_once __DIR__ . '/../helpers/Logger.php'; // Importar Logger
+require_once __DIR__ . '/../helpers/Logger.php'; // [MEJORA] Logger
 
 $config = include __DIR__ . '/../config/config.php';
 if (! defined('BASE_URL')) {
@@ -38,6 +38,13 @@ function handleLogin(string $email, string $password): ?string {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
+            
+            // [MEJORA SOFT DELETE] Verificar si el usuario está activo
+            if (isset($user['is_active']) && $user['is_active'] == 0) {
+                log_audit($user['id'], 'login_bloqueado', "Intento de acceso de usuario inactivo: $email");
+                return 'Su cuenta ha sido suspendida. Contacte al administrador.';
+            }
+
             session_regenerate_id(true);
             $_SESSION['user'] = [
                 'id'         => $user['id'],
@@ -49,7 +56,7 @@ function handleLogin(string $email, string $password): ?string {
                 'phone'      => $user['phone'],
             ];
 
-            // [MEJORA] Registrar login exitoso en audit_logs
+            // [MEJORA] Registrar login exitoso
             log_audit($user['id'], 'login_success', "Inicio de sesión exitoso desde IP: " . $_SERVER['REMOTE_ADDR']);
 
             // 🔁 Redirección personalizada según el rol
@@ -67,14 +74,13 @@ function handleLogin(string $email, string $password): ?string {
             exit;
         }
         
-        // [MEJORA] Registrar intento fallido (Si existe el usuario logueamos su ID, si no, logueamos 0 o null e indicamos el email intentado)
+        // [MEJORA] Registrar intento fallido
         $userIdIntento = $user ? $user['id'] : 0; 
         log_audit($userIdIntento, 'login_failed', "Fallo login correo: $email | IP: " . $_SERVER['REMOTE_ADDR']);
 
         return 'Correo o contraseña inválidos.';
 
     } catch (PDOException $ex) {
-        // [MEJORA] Log de error de base de datos en login
         error_log("Error DB Login: " . $ex->getMessage());
         return 'Error de conexión. Intente más tarde.';
     }
