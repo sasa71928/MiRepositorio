@@ -2,11 +2,13 @@
 /**
  * Controlador de Administración.
  * Gestiona doctores, departamentos y reportes.
- * Integra auditoría (Logs), transacciones y Soft Delete.
+ * Integra auditoría (Logs), transacciones y Soft Delete inteligente.
  */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/Logger.php'; // [MEJORA] Logger
+
+// --- Estadísticas ---
 
 function obtenerTotalDoctores(): int {
     global $pdo;
@@ -20,6 +22,8 @@ function obtenerTotalPacientes(): int {
     return (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND is_active = 1")->fetchColumn();
 }
 
+// --- Gestión de Doctores ---
+
 function crearDoctor($data) {
     global $pdo;
     $adminId = $_SESSION['user']['id'] ?? 0;
@@ -27,7 +31,7 @@ function crearDoctor($data) {
     try {
         $pdo->beginTransaction();
 
-        // 1. Insertar Usuario
+        // 1. Insertar Usuario (is_active por defecto es 1)
         $stmtUser = $pdo->prepare("
             INSERT INTO users (role_id, username, password_hash, first_name, last_name, email, phone, birthdate, gender, address, city, is_active, created_at) 
             VALUES (2, :username, :password, :first_name, :last_name, :email, :phone, :birthdate, :gender, :address, :city, 1, NOW())
@@ -128,7 +132,8 @@ function editarDoctor($data) {
 }
 
 /**
- * [NUEVO] Cambiar estado del doctor (Soft Delete / Reactivación)
+ * [CORREGIDO] Cambiar estado del doctor (Soft Delete / Reactivación)
+ * Si se suspende, cancela citas futuras automáticamente.
  */
 function cambiarEstadoDoctor($id, $nuevoEstado) {
     global $pdo;
@@ -137,33 +142,52 @@ function cambiarEstadoDoctor($id, $nuevoEstado) {
     try {
         $pdo->beginTransaction();
         
-        // Actualizamos el estado en la tabla users (1 = Activo, 0 = Inactivo)
+        // 1. Actualizamos el estado en la tabla users
         $stmt = $pdo->prepare("UPDATE users SET is_active = :estado WHERE id = :id AND role_id = 2");
         $stmt->execute([':estado' => $nuevoEstado, ':id' => $id]);
 
-        // Opcional: Si se desactiva, cancelamos citas futuras pendientes para evitar problemas
+        $citasCanceladas = 0;
+
+        // 2. Lógica de Negocio: Si se suspende (0), cancelamos sus citas futuras pendientes
         if ($nuevoEstado == 0) {
-             $stmtCitas = $pdo->prepare("
-                UPDATE appointments 
-                SET status = 'cancelada' 
-                WHERE doctor_id = (SELECT id FROM doctors WHERE user_id = :uid) 
+             // [CORRECCIÓN SQL] La relación en appointments es directa con user_id (doctor_id en appointments = user_id en users)
+             
+             // Primero contamos cuántas se van a cancelar (para el log)
+             $stmtCount = $pdo->prepare("
+                SELECT COUNT(*) FROM appointments 
+                WHERE doctor_id = :uid 
                 AND status = 'pendiente' 
-                AND scheduled_at > NOW()
+                AND scheduled_at >= NOW()
              ");
-             $stmtCitas->execute([':uid' => $id]);
+             $stmtCount->execute([':uid' => $id]);
+             $citasCanceladas = $stmtCount->fetchColumn();
+
+             // Luego ejecutamos la cancelación
+             if ($citasCanceladas > 0) {
+                 $stmtCitas = $pdo->prepare("
+                    UPDATE appointments 
+                    SET status = 'cancelada'
+                    WHERE doctor_id = :uid 
+                    AND status = 'pendiente' 
+                    AND scheduled_at >= NOW()
+                 ");
+                 $stmtCitas->execute([':uid' => $id]);
+             }
         }
 
         $pdo->commit();
 
         $accion = $nuevoEstado ? 'doctor_reactivado' : 'doctor_suspendido';
         $estadoTexto = $nuevoEstado ? 'Activo' : 'Inactivo';
-        log_audit($adminId, $accion, "El admin cambió el estado del doctor ID: $id a $estadoTexto");
+        $detalleExtra = ($nuevoEstado == 0 && $citasCanceladas > 0) ? ". Se cancelaron $citasCanceladas citas pendientes." : "";
+        
+        log_audit($adminId, $accion, "El admin cambió el estado del doctor ID: $id a $estadoTexto" . $detalleExtra);
         
         return true;
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
-        log_audit($adminId, 'error_cambiar_estado', $e->getMessage());
+        log_audit($adminId, 'error_cambiar_estado_doctor', $e->getMessage());
         return false;
     }
 }
@@ -234,7 +258,7 @@ function obtenerDepartamentos() {
 function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
     global $pdo;
     
-    // [MEJORA] Incluimos is_active en la consulta
+    // [MEJORA] Incluimos u.is_active en el SELECT
     $sql = "
         SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, 
                u.birthdate, u.gender, u.address, u.city, u.is_active,
@@ -255,7 +279,6 @@ function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
         $params[':nombre'] = "%$nombre%";
     }
     
-    // Aquí NO filtramos por is_active, para que el admin pueda ver a los suspendidos
     $sql .= " LIMIT :limite OFFSET :offset";
     
     $stmt = $pdo->prepare($sql);
@@ -290,7 +313,7 @@ function contarDoctores($departamento = '', $nombre = '') {
 
 function obtenerDepartamentosConDoctores() {
     global $pdo;
-    // Contamos solo los activos para la vista pública
+    // [MEJORA] Contamos solo los doctores activos para la vista pública
     $stmt = $pdo->query("
         SELECT d.id, d.name, COUNT(doc.id) AS total_doctores
         FROM departments d
@@ -308,7 +331,8 @@ function contarTotalConsultas() {
 
 function contarNuevosPacientes() {
     global $pdo;
-    return $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
+    // Solo pacientes activos
+    return $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND is_active = 1 AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
 }
 
 function calcularIngresosTotales() {
@@ -318,7 +342,7 @@ function calcularIngresosTotales() {
 
 function obtenerDoctoresMasActivos() {
     global $pdo;
-    // Solo consideramos doctores activos para el ranking
+    // [MEJORA] Solo doctores activos en el ranking
     $stmt = $pdo->query("
         SELECT 
             CONCAT(u.first_name, ' ', u.last_name) AS nombre,
