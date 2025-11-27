@@ -14,17 +14,30 @@ if (! defined('BASE_URL')) {
 }
 
 /**
- * Cierra la sesión y redirige a /login
+ * Cierra la sesión y redirige a /
+ * [MEJORA DE SEGURIDAD] Elimina la cookie de sesión para un cierre completo.
  */
 function logout_user(): void {
     // Limpia todas las variables de sesión
     $_SESSION = [];
-    // Destruye la sesión
+    
+    // 1. Si se usa una cookie de sesión, fuerzo su expiración (Cierre robusto)
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+    
+    // 2. Destruye la sesión en el servidor
     session_destroy();
-    // Redirige al login (o a '/login', según tu configuración)
+    
+    // 3. Redirige al inicio
     header('Location: ' . BASE_URL . '/');
     exit;
 }
+
 
 /**
  * @return bool   Si hay un usuario autenticado en $_SESSION['user']
