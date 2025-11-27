@@ -117,7 +117,8 @@ function showProfile(): void {
     } catch (Exception $ex) {
         // Si hubiera error, redirigimos a página de errores o mostramos un mensaje
         $errorMsg = $ex->getMessage();
-        include __DIR__ . '/../views/public/errores.php';
+        // Usa tu vista de error 500 si quieres, o un simple echo por ahora
+        echo "Error al cargar perfil: " . $errorMsg;
         exit;
     }
 }
@@ -199,14 +200,36 @@ function update_personal(): void {
         $_SESSION['profile_success'] = 'Información actualizada correctamente.';
     } catch (PDOException $e) {
         $_SESSION['profile_errors'] = ['Error al actualizar: ' . $e->getMessage()];
+        header('Location: ' . BASE_URL . '/profile');
+        exit;
     }
-            // Refrescar datos del usuario en la sesión
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $_SESSION['user'] = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // [CORRECCIÓN CRÍTICA]: Refrescar datos de sesión INCLUYENDO EL ROL
+    // Antes faltaba el JOIN con roles, lo que rompía la sesión y causaba el bucle infinito.
+    $stmt = $pdo->prepare("
+        SELECT u.*, r.name as role_name 
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = ?
+    ");
+    $stmt->execute([$userId]);
+    $freshUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    header('Location: ' . BASE_URL . '/login');
+    if ($freshUser) {
+        // Reconstruimos la sesión con la misma estructura que en el Login
+        $_SESSION['user'] = [
+            'id'         => $freshUser['id'],
+            'username'   => $freshUser['username'],
+            'first_name' => $freshUser['first_name'],
+            'last_name'  => $freshUser['last_name'],
+            'email'      => $freshUser['email'],
+            'role'       => $freshUser['role_name'], // ¡Esto era lo que faltaba!
+            'phone'      => $freshUser['phone'],
+        ];
+    }
+
+    // Redirigimos al perfil (mejor experiencia) en vez de al login
+    header('Location: ' . BASE_URL . '/profile');
     exit;
 }
 
