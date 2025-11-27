@@ -13,7 +13,6 @@ $nombreBuscado = $_GET['nombre'] ?? '';
 $doctores = obtenerDoctores($doctoresPorPagina, $offset, $filtroDepartamento, $nombreBuscado);
 $totalDoctores = contarDoctores($filtroDepartamento, $nombreBuscado);
 $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
-
 ?>
 
 <!DOCTYPE html>
@@ -33,24 +32,44 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
         gap: 20px;
         margin-bottom: 15px;
     }
-
     .form-row .form-group {
         flex: 1 1 45%;
         min-width: 200px;
     }
-
     @media (max-width: 768px) {
-        .form-row {
-            flex-direction: column;
-        }
+        .form-row { flex-direction: column; }
     }
     .btn-limpiar {
         text-decoration: none !important;
         color: white;
     }
-    .btn-limpiar:visited {
-        color: white;
+    .btn-limpiar:visited { color: white; }
+
+    /* Estilos para badges de estado */
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 600;
+        display: inline-block;
     }
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    /* Botones de acción específicos */
+    .btn-suspend { color: #ffc107; }
+    .btn-suspend:hover { background-color: #fff3cd; }
+    
+    .btn-activate { color: #28a745; }
+    .btn-activate:hover { background-color: #d4edda; }
 </style>
 
 <body>
@@ -61,7 +80,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                 <section class="content-header">
                     <div class="header-title">
                         <h1>Gestión de Doctores</h1>
-                        <p>Administra los doctores de la clínica</p>
+                        <p>Administra el acceso y estado de los doctores</p>
                     </div>
                     <div class="header-actions">
                         <button id="btnAgregarDoctor" class="btn btn-primary">
@@ -102,7 +121,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                                     <th>ID</th>
                                     <th>Nombre</th>
                                     <th>Departamento</th>
-                                    <th>Email</th>
+                                    <th>Estado</th> <!-- Nueva Columna -->
                                     <th>Teléfono</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -118,9 +137,20 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                                             <td><?= htmlspecialchars($doctor['id']) ?></td>
                                             <td><?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?></td>
                                             <td><?= htmlspecialchars($doctor['departamento']) ?></td>
-                                            <td><?= htmlspecialchars($doctor['email']) ?></td>
+                                            
+                                            <!-- Columna de Estado -->
+                                            <td>
+                                                <?php if ($doctor['is_active']): ?>
+                                                    <span class="status-badge status-active">Activo</span>
+                                                <?php else: ?>
+                                                    <span class="status-badge status-inactive">Suspendido</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            
                                             <td><?= htmlspecialchars($doctor['phone']) ?></td>
+                                            
                                             <td class="actions-cell">
+                                                <!-- Botón Editar -->
                                                 <button class="btn-icon btn-edit"
                                                     data-id="<?= $doctor['id'] ?>"
                                                     data-username="<?= htmlspecialchars($doctor['username']) ?>"
@@ -137,11 +167,27 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                                                     title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon btn-delete" title="Eliminar"
-                                                        data-id="<?= $doctor['id'] ?>"
-                                                        data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                
+                                                <!-- Botón Cambiar Estado (Suspend/Activate) -->
+                                                <?php if ($doctor['is_active']): ?>
+                                                    <button class="btn-icon btn-suspend btn-cambiar-estado" 
+                                                            title="Suspender Cuenta"
+                                                            data-id="<?= $doctor['id'] ?>"
+                                                            data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>"
+                                                            data-accion="suspender"
+                                                            data-nuevo-estado="0">
+                                                        <i class="fas fa-user-slash"></i>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button class="btn-icon btn-activate btn-cambiar-estado" 
+                                                            title="Reactivar Cuenta"
+                                                            data-id="<?= $doctor['id'] ?>"
+                                                            data-name="<?= htmlspecialchars($doctor['first_name'] . ' ' . $doctor['last_name']) ?>"
+                                                            data-accion="activar"
+                                                            data-nuevo-estado="1">
+                                                        <i class="fas fa-user-check"></i>
+                                                    </button>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -150,6 +196,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                         </table>
                     </div>
                     
+                    <!-- Paginación -->
                     <div class="pagination">
                         <?php if ($paginaActual > 1): ?>
                             <a href="?pagina=<?= $paginaActual - 1 ?>&departamento=<?= urlencode($filtroDepartamento) ?>&nombre=<?= urlencode($nombreBuscado) ?>" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
@@ -166,7 +213,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
         </div>
     </main>
     
-    <!-- Modal Agregar -->
+    <!-- Modal Agregar (Igual que antes) -->
     <div id="modalAgregarDoctor" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -175,6 +222,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
             </div>
             <div class="modal-body">
                 <form id="formAgregarDoctor" action="<?= BASE_URL ?>/adminDoctors/crearDoctor" method="POST">
+                    <!-- Campos del formulario (los mismos de antes) -->
                     <div class="form-row">
                         <div class="form-group"><label>Usuario</label><input type="text" name="username" required></div>
                         <div class="form-group"><label>Nombre(s)</label><input type="text" name="first_name" required></div>
@@ -215,29 +263,29 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline close-modal-btn">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar Doctor</button>
+                        <button type="submit" class="btn btn-primary" id="btnConfirmarAgregar">Guardar Doctor</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal Eliminar -->
-    <div id="modalConfirmarEliminar" class="modal">
+    <!-- Modal Cambiar Estado (Antes Eliminar) -->
+    <div id="modalConfirmarEstado" class="modal">
         <div class="modal-content modal-sm">
             <div class="modal-header">
-                <h2>Confirmar Eliminación</h2>
+                <h2 id="tituloModalEstado">Confirmar Acción</h2>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="confirmation-message">
                     <i class="fas fa-exclamation-triangle warning-icon"></i>
-                    <p>¿Está seguro que desea eliminar al doctor <span id="doctorName"></span>?</p>
+                    <p id="mensajeModalEstado"></p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">Cancelar</button>
-                <button class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                <button class="btn btn-primary" id="btnConfirmarEstado">Confirmar</button>
             </div>
         </div>
     </div>
@@ -261,7 +309,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
         </div>
     </div>
 
-    <!-- Modal Editar -->
+    <!-- Modal Editar (Igual que antes) -->
     <div id="modalEditarDoctor" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -270,9 +318,7 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
             </div>
             <div class="modal-body">
                 <form id="formEditarDoctor" action="<?= BASE_URL ?>/adminDoctors/editarDoctor" method="POST">
-                    <!-- El ID del doctor es crucial -->
                     <input type="hidden" id="edit_id" name="id">
-
                     <div class="form-row">
                         <div class="form-group"><label>Usuario</label><input type="text" id="edit_username" name="username" required></div>
                         <div class="form-group"><label>Nombre(s)</label><input type="text" id="edit_first_name" name="first_name" required></div>
@@ -306,10 +352,8 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                     </div>
                     <div class="form-group"><label>Cédula</label><input type="text" id="edit_cedula" name="cedula" required></div>
                     <div class="form-group"><label>Nueva Contraseña (opcional)</label><input type="password" id="edit_password" name="password"></div>
-                    
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline close-modal-btn">Cancelar</button>
-                        <!-- Importante: type="button" para manejarlo con JS y FormData -->
                         <button type="button" class="btn btn-primary" id="btnConfirmarEditar">Guardar Cambios</button>
                     </div>
                 </form>
@@ -319,29 +363,41 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Elementos
+        // Elementos Globales
         const modals = document.querySelectorAll('.modal');
         const closeBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
+        let doctorIdAction = null;
+        let nuevoEstadoAction = null;
         
         // Cerrar modales
-        closeBtns.forEach(btn => {
-            btn.addEventListener('click', () => modals.forEach(m => m.style.display = 'none'));
-        });
-        
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
-        });
+        closeBtns.forEach(btn => btn.addEventListener('click', () => modals.forEach(m => m.style.display = 'none')));
+        window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
 
         // --- AGREGAR DOCTOR ---
-        document.getElementById('btnAgregarDoctor').addEventListener('click', () => {
-            document.getElementById('modalAgregarDoctor').style.display = 'flex';
+        document.getElementById('btnAgregarDoctor').addEventListener('click', () => document.getElementById('modalAgregarDoctor').style.display = 'flex');
+
+        // Guardar Agregar
+        document.getElementById('btnConfirmarAgregar').addEventListener('click', async function () {
+             const form = document.getElementById('formAgregarDoctor');
+             if (!form.checkValidity()) { form.reportValidity(); return; }
+             const formData = new FormData(form);
+             try {
+                 const response = await fetch(form.action, { method: 'POST', body: formData });
+                 if (response.ok) {
+                     document.getElementById('modalAgregarDoctor').style.display = 'none';
+                     document.getElementById('mensajeExito').textContent = 'Doctor agregado correctamente.';
+                     document.getElementById('modalExito').style.display = 'flex';
+                     form.reset();
+                 } else {
+                     alert('Error al agregar el doctor.');
+                 }
+             } catch(e) { console.error(e); }
         });
 
         // --- EDITAR DOCTOR ---
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', function() {
                 const d = this.dataset;
-                // Llenar formulario
                 document.getElementById('edit_id').value = d.id;
                 document.getElementById('edit_username').value = d.username;
                 document.getElementById('edit_first_name').value = d.first_name;
@@ -354,68 +410,85 @@ $totalPaginas = ceil($totalDoctores / $doctoresPorPagina);
                 document.getElementById('edit_telefono').value = d.phone;
                 document.getElementById('edit_cedula').value = d.cedula;
                 document.getElementById('edit_especialidad').value = d.departamento_id;
-                
                 document.getElementById('modalEditarDoctor').style.display = 'flex';
             });
         });
 
-        // --- GUARDAR EDICIÓN (CORRECCIÓN CLAVE) ---
+        // Guardar Edición
         document.getElementById('btnConfirmarEditar').addEventListener('click', async function() {
             const form = document.getElementById('formEditarDoctor');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            // [CORRECCIÓN] Usar FormData para enviar como formulario tradicional (POST)
-            // Esto asegura que $_POST se llene correctamente en el servidor.
+            if (!form.checkValidity()) { form.reportValidity(); return; }
             const formData = new FormData(form);
-
             try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Como el controlador hace un redirect, fetch seguirá la redirección.
-                // Si la respuesta es ok (200), asumimos éxito.
+                const response = await fetch(form.action, { method: 'POST', body: formData });
                 if (response.ok) {
                     document.getElementById('modalEditarDoctor').style.display = 'none';
                     document.getElementById('mensajeExito').textContent = 'Doctor actualizado correctamente.';
                     document.getElementById('modalExito').style.display = 'flex';
                 } else {
-                    alert('Hubo un error al guardar los cambios.');
+                    // Leer respuesta JSON del error 500
+                    const data = await response.json();
+                    alert('❌ Error: ' + (data.message || 'No se pudo actualizar.'));
                 }
-            } catch (err) {
-                console.error(err);
-                alert('Error de conexión.');
+            } catch (err) { console.error(err); alert('Error conexión.'); }
+        });
+
+        // --- CAMBIAR ESTADO (SUSPENDER/ACTIVAR) ---
+        document.querySelectorAll('.btn-cambiar-estado').forEach(btn => {
+            btn.addEventListener('click', function() {
+                doctorIdAction = this.dataset.id;
+                nuevoEstadoAction = this.dataset.nuevoEstado;
+                const nombre = this.dataset.name;
+                const accion = this.dataset.accion; // suspender o activar
+                
+                const titulo = accion === 'suspender' ? 'Suspender Doctor' : 'Reactivar Doctor';
+                const mensaje = accion === 'suspender' 
+                    ? `¿Seguro que desea suspender la cuenta del Dr. ${nombre}? No podrá iniciar sesión.` 
+                    : `¿Desea reactivar la cuenta del Dr. ${nombre}?`;
+
+                document.getElementById('tituloModalEstado').textContent = titulo;
+                document.getElementById('mensajeModalEstado').textContent = mensaje;
+                
+                // Cambiar color del botón según acción
+                const btnConfirmar = document.getElementById('btnConfirmarEstado');
+                btnConfirmar.className = accion === 'suspender' ? 'btn btn-warning' : 'btn btn-success';
+                
+                document.getElementById('modalConfirmarEstado').style.display = 'flex';
+            });
+        });
+
+        // Confirmar Cambio de Estado
+        document.getElementById('btnConfirmarEstado').addEventListener('click', async function() {
+            if(!doctorIdAction) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('id', doctorIdAction);
+                formData.append('estado', nuevoEstadoAction);
+
+                const response = await fetch('<?= BASE_URL ?>/adminDoctors/cambiarEstado', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    document.getElementById('modalConfirmarEstado').style.display = 'none';
+                    document.getElementById('mensajeExito').textContent = 'El estado del doctor ha sido actualizado.';
+                    document.getElementById('modalExito').style.display = 'flex';
+                } else {
+                    alert('Error al cambiar el estado.');
+                }
+            } catch (e) {
+                console.error(e);
             }
         });
 
-        // --- ELIMINAR ---
-        // (Lógica de UI para mostrar modal, la eliminación real dependerá de tu implementación en backend)
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const name = this.dataset.name;
-                document.getElementById('doctorName').textContent = name;
-                document.getElementById('modalConfirmarEliminar').style.display = 'flex';
-                // Aquí podrías setear el ID en el botón de confirmar para hacer el fetch de borrado
-            });
-        });
-
-        // Recargar al aceptar éxito
-        document.getElementById('btnAceptarExito').addEventListener('click', () => {
-            window.location.reload();
-        });
+        // Recargar
+        document.getElementById('btnAceptarExito').addEventListener('click', () => window.location.reload());
         
         // Filtro automático
         const selectDep = document.getElementById('filtroDepartamento');
-        if(selectDep) {
-            selectDep.addEventListener('change', function() {
-                this.form.submit();
-            });
-        }
+        if(selectDep) selectDep.addEventListener('change', function() { this.form.submit(); });
     });
     </script>
 </body>

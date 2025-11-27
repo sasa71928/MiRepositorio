@@ -2,7 +2,7 @@
 /**
  * Controlador de Administración.
  * Gestiona doctores, departamentos y reportes.
- * Integra auditoría (Logs) y transacciones.
+ * Integra auditoría (Logs), transacciones y Soft Delete.
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -10,12 +10,14 @@ require_once __DIR__ . '/../helpers/Logger.php'; // [MEJORA] Logger
 
 function obtenerTotalDoctores(): int {
     global $pdo;
-    return (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 2")->fetchColumn();
+    // Contamos solo los activos para estadísticas generales
+    return (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 2 AND is_active = 1")->fetchColumn();
 }
 
 function obtenerTotalPacientes(): int {
     global $pdo;
-    return (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3")->fetchColumn();
+    // Contamos solo los activos
+    return (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role_id = 3 AND is_active = 1")->fetchColumn();
 }
 
 function crearDoctor($data) {
@@ -27,8 +29,8 @@ function crearDoctor($data) {
 
         // 1. Insertar Usuario
         $stmtUser = $pdo->prepare("
-            INSERT INTO users (role_id, username, password_hash, first_name, last_name, email, phone, birthdate, gender, address, city, created_at) 
-            VALUES (2, :username, :password, :first_name, :last_name, :email, :phone, :birthdate, :gender, :address, :city, NOW())
+            INSERT INTO users (role_id, username, password_hash, first_name, last_name, email, phone, birthdate, gender, address, city, is_active, created_at) 
+            VALUES (2, :username, :password, :first_name, :last_name, :email, :phone, :birthdate, :gender, :address, :city, 1, NOW())
         ");
 
         $stmtUser->execute([
@@ -58,19 +60,19 @@ function crearDoctor($data) {
             ':department_id' => $data['department_id'],
         ]);
         
-        // 3. Preferencias
+        // 3. Preferencias por defecto
         $stmtPref = $pdo->prepare("INSERT INTO user_preferences (user_id) VALUES (?)");
         $stmtPref->execute([$userId]);
 
         $pdo->commit();
 
         log_audit($adminId, 'doctor_creado', "Admin creó al Dr. {$data['first_name']} {$data['last_name']} (ID: $userId)");
-        return true; // [CORRECCIÓN] Retorna éxito
+        return true;
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         log_audit($adminId, 'error_crear_doctor', $e->getMessage());
-        return false; // [CORRECCIÓN] Retorna fallo
+        return false;
     }
 }
 
@@ -116,12 +118,53 @@ function editarDoctor($data) {
         $pdo->commit();
         
         log_audit($adminId, 'doctor_editado', "Admin editó al doctor ID: $id");
-        return true; // [CORRECCIÓN] Retorna éxito
+        return true;
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         log_audit($adminId, 'error_editar_doctor', $e->getMessage());
-        return false; // [CORRECCIÓN] Retorna fallo
+        return false;
+    }
+}
+
+/**
+ * [NUEVO] Cambiar estado del doctor (Soft Delete / Reactivación)
+ */
+function cambiarEstadoDoctor($id, $nuevoEstado) {
+    global $pdo;
+    $adminId = $_SESSION['user']['id'] ?? 0;
+
+    try {
+        $pdo->beginTransaction();
+        
+        // Actualizamos el estado en la tabla users (1 = Activo, 0 = Inactivo)
+        $stmt = $pdo->prepare("UPDATE users SET is_active = :estado WHERE id = :id AND role_id = 2");
+        $stmt->execute([':estado' => $nuevoEstado, ':id' => $id]);
+
+        // Opcional: Si se desactiva, cancelamos citas futuras pendientes para evitar problemas
+        if ($nuevoEstado == 0) {
+             $stmtCitas = $pdo->prepare("
+                UPDATE appointments 
+                SET status = 'cancelada' 
+                WHERE doctor_id = (SELECT id FROM doctors WHERE user_id = :uid) 
+                AND status = 'pendiente' 
+                AND scheduled_at > NOW()
+             ");
+             $stmtCitas->execute([':uid' => $id]);
+        }
+
+        $pdo->commit();
+
+        $accion = $nuevoEstado ? 'doctor_reactivado' : 'doctor_suspendido';
+        $estadoTexto = $nuevoEstado ? 'Activo' : 'Inactivo';
+        log_audit($adminId, $accion, "El admin cambió el estado del doctor ID: $id a $estadoTexto");
+        
+        return true;
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        log_audit($adminId, 'error_cambiar_estado', $e->getMessage());
+        return false;
     }
 }
 
@@ -160,6 +203,7 @@ function eliminarDepartamento($id) {
     $adminId = $_SESSION['user']['id'] ?? 0;
 
     try {
+        // Validar si hay doctores (Integridad Referencial)
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM doctors WHERE department_id = ?");
         $stmt->execute([$id]);
         if ($stmt->fetchColumn() > 0) {
@@ -175,7 +219,7 @@ function eliminarDepartamento($id) {
         
     } catch (Exception $e) {
         log_audit($adminId, 'error_eliminar_depto', $e->getMessage());
-        return false; // [CORRECCIÓN] Retorna fallo
+        return false;
     }
 }
 
@@ -189,15 +233,18 @@ function obtenerDepartamentos() {
 
 function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
     global $pdo;
+    
+    // [MEJORA] Incluimos is_active en la consulta
     $sql = "
         SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, 
-               u.birthdate, u.gender, u.address, u.city,
+               u.birthdate, u.gender, u.address, u.city, u.is_active,
                d.name AS departamento, doc.cedula_profesional, doc.department_id
         FROM users u
         JOIN doctors doc ON u.id = doc.user_id
         JOIN departments d ON doc.department_id = d.id
         WHERE u.role_id = 2
     ";
+    
     $params = [];
     if ($departamento !== '') {
         $sql .= " AND d.name = :departamento";
@@ -207,7 +254,10 @@ function obtenerDoctores($limite, $offset, $departamento = '', $nombre = '') {
         $sql .= " AND CONCAT(u.first_name, ' ', u.last_name) LIKE :nombre";
         $params[':nombre'] = "%$nombre%";
     }
+    
+    // Aquí NO filtramos por is_active, para que el admin pueda ver a los suspendidos
     $sql .= " LIMIT :limite OFFSET :offset";
+    
     $stmt = $pdo->prepare($sql);
     foreach ($params as $key => $value) $stmt->bindValue($key, $value);
     $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
@@ -240,10 +290,12 @@ function contarDoctores($departamento = '', $nombre = '') {
 
 function obtenerDepartamentosConDoctores() {
     global $pdo;
+    // Contamos solo los activos para la vista pública
     $stmt = $pdo->query("
         SELECT d.id, d.name, COUNT(doc.id) AS total_doctores
         FROM departments d
         LEFT JOIN doctors doc ON doc.department_id = d.id
+        LEFT JOIN users u ON doc.user_id = u.id AND u.is_active = 1
         GROUP BY d.id
     ");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -266,6 +318,7 @@ function calcularIngresosTotales() {
 
 function obtenerDoctoresMasActivos() {
     global $pdo;
+    // Solo consideramos doctores activos para el ranking
     $stmt = $pdo->query("
         SELECT 
             CONCAT(u.first_name, ' ', u.last_name) AS nombre,
@@ -277,7 +330,7 @@ function obtenerDoctoresMasActivos() {
         JOIN doctors doc ON doc.user_id = u.id
         LEFT JOIN departments d ON doc.department_id = d.id
         LEFT JOIN ratings r ON r.doctor_id = u.id
-        WHERE a.status = 'completada'
+        WHERE a.status = 'completada' AND u.is_active = 1
         GROUP BY u.id
         ORDER BY consultas DESC
         LIMIT 5

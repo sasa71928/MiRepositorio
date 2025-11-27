@@ -168,7 +168,8 @@ switch ($request) {
             $totalDoctors = obtenerTotalDoctores();
             $totalPatients = obtenerTotalPacientes();
             require_once __DIR__ . '/../src/views/admin/vistaAdmin.php';
-            break;
+        break;
+
         case '/adminDoctors/gestionar':
             require_once __DIR__ . '/../src/helpers/auth.php';
             require_login();
@@ -179,22 +180,24 @@ switch ($request) {
             require_once __DIR__ . '/../src/views/admin/doctors/gestionDoctores.php';
         break;
 
+        // [CORRECCIÓN] Devolver JSON para que el modal muestre éxito/error
         case '/adminDoctors/crearDoctor':
             require_once __DIR__ . '/../src/controllers/AdminController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (crearDoctor($_POST)) {
-                    // Éxito: Devolvemos 200 OK para que el JS lo detecte
+                    // Éxito: 200 OK
                     http_response_code(200);
                     echo json_encode(['status' => 'success']);
                 } else {
-                    // Error: Devolvemos 500 para que el JS lance la alerta
+                    // Error: 500 Internal Server Error
                     http_response_code(500);
                     echo json_encode(['status' => 'error', 'message' => 'No se pudo crear el doctor']);
                 }
-                exit;
+                exit; 
             }
         break;
 
+        // [CORRECCIÓN] Devolver JSON para que el modal muestre éxito/error
         case '/adminDoctors/editarDoctor':
             require_once __DIR__ . '/../src/controllers/AdminController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -211,29 +214,22 @@ switch ($request) {
             }
         break;
 
-        case '/adminDoctors/editarDoctor':
+        // [NUEVO] Ruta para cambiar estado (Suspender/Activar)
+        case '/adminDoctors/cambiarEstado':
             require_once __DIR__ . '/../src/controllers/AdminController.php';
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                if (editarDoctor($_POST)) {
-                    // Éxito: Redirigir o solo 200 OK si es AJAX
-                    header('Location: ' . BASE_URL . '/adminDoctors/gestionar?mensaje=actualizado');
+                $id = $_POST['id'] ?? 0;
+                $estado = $_POST['estado'] ?? 1;
+                
+                if (cambiarEstadoDoctor($id, $estado)) {
+                    http_response_code(200);
+                    echo json_encode(['status' => 'success']);
                 } else {
-                    // Fallo: Mandar error 500 para que el JS lo cache
                     http_response_code(500);
-                    echo "Error al actualizar";
+                    echo json_encode(['status' => 'error']);
                 }
                 exit;
             }
-        break;
-        
-        case '/adminDoctors/gestionar':
-            require_once __DIR__ . '/../src/helpers/auth.php';
-            require_login();
-            if ($_SESSION['user']['role'] !== 'admin') {
-                header('Location: ' . BASE_URL . '/');
-                exit;
-            }
-            require_once __DIR__ . '/../../src/views/admin/doctors/gestionDoctores.php';
         break;
 
         case '/appointments/create':
