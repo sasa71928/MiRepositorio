@@ -361,3 +361,16 @@ function obtenerDoctoresMasActivos() {
     ");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// [NUEVA FUNCIÓN] Obtener estadísticas de logs para la gráfica
+function obtenerEstadisticasLogs() {
+    global $pdo;
+    $stmt = $pdo->query("
+        SELECT action, COUNT(*) as total 
+        FROM audit_logs 
+        GROUP BY action 
+        ORDER BY total DESC 
+        LIMIT 8
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
