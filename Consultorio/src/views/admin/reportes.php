@@ -134,6 +134,11 @@ foreach ($statsLogs as $log) {
                         </div>
                     </div>
                 </section>
+                <form action="<?= BASE_URL ?>/reporte/enviarGeneral" method="POST">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-file-pdf"></i> Generar y Enviar Reporte
+                    </button>
+                </form>
             </div>
 
             <!-- Contenido Pestaña 2: Auditoría -->
@@ -145,6 +150,11 @@ foreach ($statsLogs as $log) {
                         <canvas id="chartLogs"></canvas>
                     </div>
                 </div>
+                <form action="<?= BASE_URL ?>/reporte/enviarAuditoria" method="POST">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-file-pdf"></i> Generar y Enviar Reporte
+                    </button>
+                </form>
             </div>
 
             <!-- Contenido Pestaña 3: Listado -->
@@ -180,7 +190,7 @@ foreach ($statsLogs as $log) {
                             </tbody>
                         </table>
                         <br>
-                        <form action="<?= BASE_URL ?>/reporte/enviar" method="POST">
+                        <form action="<?= BASE_URL ?>/reporte/enviarGeneral" method="POST">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-file-pdf"></i> Generar y Enviar Reporte
                             </button>
