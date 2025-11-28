@@ -5,7 +5,7 @@ return [
     'assets_url' => 'http://localhost/ProyectoConsultorio/Consultorio/public/assets',
     'db' => [
         'host'     => '127.0.0.1',
-        'name'     => 'clinigest',
+        'name'     => 'viejaclinigest',
         'user'     => 'root',
         'password' => ''
     ]
