@@ -61,7 +61,7 @@
                                 <i class="fas fa-user-md"></i>
                             </div>
                             <h3>Gestionar Doctores</h3>
-                            <p>Agregar, editar o eliminar doctores del sistema</p>
+                            <p>Agregar, editar o suspender doctores del sistema</p>
                         </a>
                         
                          <a href="<?= BASE_URL ?>/reportesAdmin" class="quick-access-card">

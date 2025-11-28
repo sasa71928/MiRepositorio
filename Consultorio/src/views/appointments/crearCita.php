@@ -38,9 +38,10 @@ $hoy = date('Y-m-d');
         ✅ ¡Tu cita ha sido agendada con éxito!
     </div>
 
-    <div class="text-center" style="margin-top: 20px;">
-           <a href="<?= BASE_URL ?>/appointments/mine" class="appointment-btn">Agendar cita</button>
-    </div>
+<div class="appointment-btn" style="text-align: center; margin-top: 20px;">
+    <a href="<?= BASE_URL ?>/appointments/mine" class="btn btn-primary">Ver Mis Citas</a>
+</div>
+
 
     <?php else: ?>
     <form action="<?= BASE_URL ?>/appointments/create" method="post" role="form" class="appointment-form">
