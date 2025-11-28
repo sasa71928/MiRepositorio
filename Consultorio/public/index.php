@@ -401,23 +401,19 @@ switch ($request) {
                 }
                 exit;
             }
-        break;
+            break;
 
         case '/listaPacientes':
-            require_once __DIR__ . '/../src/controllers/AppointmentController.php';
-            require_once __DIR__ . '/../src/helpers/auth.php';
-            require_login();
+                    require_once __DIR__ . '/../src/controllers/AppointmentController.php';
+                    require_once __DIR__ . '/../src/helpers/auth.php';
+                    require_login();
 
-            $doctorId = $_SESSION['user']['id'];
-            $pacientes = obtenerPacientesDelDoctor($doctorId);
+                    $doctorId = $_SESSION['user']['id'];
 
-            // Aquí agregas las citas a cada paciente
-            foreach ($pacientes as &$paciente) {
-                $paciente['citas'] = obtenerCitasPorUsuario($paciente['id']);
-            }
+                    $pacientes = obtenerPacientesDelDoctor($doctorId);
 
-            include __DIR__ . '/../src/views/doctors/listaPacientes.php';
-        break;
+                    include __DIR__ . '/../src/views/doctors/listaPacientes.php';
+                break;
 
         case '/departamento':
             require_once __DIR__ . '/../src/helpers/auth.php';

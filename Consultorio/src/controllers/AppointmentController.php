@@ -168,6 +168,8 @@ function completarConsulta($data) {
 
 function obtenerPacientesDelDoctor($doctorId) {
     global $pdo;
+
+    // 1. OBTENER LA LISTA DE PACIENTES
     $stmt = $pdo->prepare("
         SELECT DISTINCT 
             u.id, u.first_name, u.last_name, u.phone, u.birthdate, u.gender,
@@ -177,11 +179,38 @@ function obtenerPacientesDelDoctor($doctorId) {
         FROM appointments a
         JOIN users u ON a.user_id = u.id
         LEFT JOIN medical_info mi ON u.id = mi.user_id
-        WHERE a.doctor_id = ?
+        WHERE a.doctor_id = ? 
+        AND a.status = 'completada'
         ORDER BY u.last_name
     ");
+    
     $stmt->execute([$doctorId]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Si no hay pacientes, retornamos vacío
+    if (empty($pacientes)) {
+        return [];
+    }
+
+    // 2. OBTENER HISTORIAL DE CADA UNO 
+    foreach ($pacientes as &$paciente) {
+        $stmtCitas = $pdo->prepare("
+            SELECT scheduled_at, reason, status 
+            FROM appointments 
+            WHERE doctor_id = ? 
+            AND user_id = ? 
+            AND status = 'completada'
+            ORDER BY scheduled_at DESC
+        ");
+        $stmtCitas->execute([$doctorId, $paciente['id']]);
+        
+        $paciente['citas'] = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // IMPORTANTE: Romper la referencia. 
+    unset($paciente); 
+
+    return $pacientes;
 }
 
 function obtenerDatosPaciente($id) {
